@@ -1,15 +1,22 @@
 import json
 import os
+import re
 import sys
 import urllib.request
 import urllib.error
 
-TOKEN = os.environ["GH_TOKEN"]
+TOKEN = os.environ.get("GH_TOKEN", "")
+if not TOKEN:
+    print("Error: GH_TOKEN is not set. Add PR_DASHBOARD_TOKEN to your repo secrets.")
+    sys.exit(1)
+
 HEADERS = {
     "Authorization": f"token {TOKEN}",
     "Accept": "application/vnd.github.v3+json",
     "User-Agent": "pr-review-dashboard",
 }
+
+REPO_PATTERN = re.compile(r"^[a-zA-Z0-9\-_.]+/[a-zA-Z0-9\-_.]+$")
 
 
 def gh_get(url):
@@ -107,6 +114,11 @@ def fetch_repo(repo):
 def main():
     with open("repos.json") as f:
         repos = json.load(f)
+
+    for repo in repos:
+        if not REPO_PATTERN.match(repo):
+            print(f"Error: invalid repo format '{repo}'. Expected 'owner/repo'.")
+            sys.exit(1)
 
     all_prs = []
     for repo in repos:

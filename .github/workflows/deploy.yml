@@ -2,10 +2,13 @@ name: Fetch PRs & Deploy
 
 on:
   schedule:
-    - cron: "*/15 * * * *"  # every 15 minutes
+    - cron: "*/15 * * * *"
   push:
     branches: [main]
   workflow_dispatch:
+
+# Never runs on pull_request events — repos.json is user input
+# that controls which API endpoints are called with the PAT.
 
 permissions:
   contents: read
@@ -42,10 +45,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare site
+        run: |
+          mkdir _site
+          cp index.html data.json _site/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
