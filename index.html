@@ -345,7 +345,7 @@
     /* Board view */
     .board {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 12px;
       align-items: start;
     }
@@ -553,7 +553,6 @@
         <option value="approved">Approved</option>
         <option value="changes_requested">Changes requested</option>
         <option value="draft">Draft</option>
-        <option value="merged">Merged</option>
       </select>
       <select id="repo-filter">
         <option value="all">All repos</option>
@@ -583,7 +582,6 @@
       { key: 'in_review', label: 'In Review' },
       { key: 'changes_requested', label: 'Changes Req.' },
       { key: 'approved', label: 'Approved' },
-      { key: 'merged', label: 'Merged' },
     ];
 
     const REVIEW_DOT_CLASS = {
@@ -636,7 +634,7 @@
         const res = await fetch('data.json');
         if (!res.ok) throw new Error('data.json not found — the GitHub Action may not have run yet.');
         const data = await res.json();
-        allPRs = data.prs;
+        allPRs = data.prs.filter(pr => pr.status !== 'merged');
 
         if (data.updated_at) {
           document.getElementById('last-updated').textContent = 'Data from ' + timeAgo(data.updated_at);
@@ -690,7 +688,7 @@
 
     function renderStats() {
       const stats = {
-        total: allPRs.filter(pr => !pr.merged).length,
+        total: allPRs.length,
         needs_review: allPRs.filter(pr => pr.status === 'needs_review').length,
         in_review: allPRs.filter(pr => pr.status === 'in_review').length,
         approved: allPRs.filter(pr => pr.status === 'approved').length,
@@ -704,13 +702,12 @@
         <div class="stat-card"><div class="stat-number" style="color:var(--accent)">${stats.in_review}</div><div class="stat-label">In Review</div></div>
         <div class="stat-card"><div class="stat-number" style="color:var(--green)">${stats.approved}</div><div class="stat-label">Approved</div></div>
         <div class="stat-card"><div class="stat-number" style="color:var(--red)">${stats.changes_requested}</div><div class="stat-label">Changes Req.</div></div>
-        <div class="stat-card"><div class="stat-number" style="color:var(--text-muted)">${stats.draft}</div><div class="stat-label">Draft</div></div>
-      `;
+        <div class="stat-card"><div class="stat-number" style="color:var(--text-muted)">${stats.draft}</div><div class="stat-label">Draft</div></div>      `;
     }
 
     function renderReviewerChips() {
       const reviewerCounts = new Map();
-      allPRs.filter(pr => !pr.merged).forEach(pr => {
+      allPRs.forEach(pr => {
         pr.reviewers.forEach(r => {
           const login = r.login;
           const entry = reviewerCounts.get(login) || { login, avatar_url: r.avatar_url, pending: 0, total: 0 };
