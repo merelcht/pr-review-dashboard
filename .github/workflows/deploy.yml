@@ -1,0 +1,52 @@
+name: Fetch PRs & Deploy
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"  # every 15 minutes
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch PR data
+        env:
+          GH_TOKEN: ${{ secrets.PR_DASHBOARD_TOKEN }}
+        run: python fetch_prs.py
+
+      - name: Stamp update time
+        run: |
+          python -c "
+          import json, datetime
+          with open('data.json') as f: d = json.load(f)
+          d['updated_at'] = datetime.datetime.utcnow().isoformat() + 'Z'
+          with open('data.json', 'w') as f: json.dump(d, f)
+          "
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

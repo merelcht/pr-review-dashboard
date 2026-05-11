@@ -70,50 +70,6 @@
     button:hover { background: var(--surface-hover); cursor: pointer; }
     button:focus, select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.3); }
 
-    .btn-primary {
-      background: #238636;
-      border-color: rgba(240,246,252,0.1);
-      color: #fff;
-    }
-    .btn-primary:hover { background: #2ea043; }
-
-    .setup-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .setup-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 520px;
-      width: 90%;
-    }
-
-    .setup-card h2 { margin-bottom: 8px; font-size: 20px; }
-    .setup-card p { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
-
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .form-group input, .form-group textarea {
-      width: 100%;
-      padding: 8px 12px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 14px;
-    }
-    .form-group textarea { min-height: 80px; resize: vertical; }
-    .form-group .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
     .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; }
 
     .stats-bar {
@@ -215,13 +171,9 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       border-bottom: 1px solid var(--border);
-      cursor: pointer;
       user-select: none;
       white-space: nowrap;
     }
-
-    .pr-table th:hover { color: var(--text); }
-    .pr-table th .sort-arrow { margin-left: 4px; font-size: 10px; }
 
     .pr-table td {
       padding: 12px 16px;
@@ -338,9 +290,7 @@
       color: var(--text-muted);
     }
 
-    .tooltip {
-      position: relative;
-    }
+    .tooltip { position: relative; }
 
     .tooltip::after {
       content: attr(data-tooltip);
@@ -362,15 +312,6 @@
 
     .tooltip:hover::after { opacity: 1; }
 
-    .settings-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 4px;
-    }
-    .settings-btn:hover { color: var(--text); }
-
     @media (max-width: 768px) {
       .pr-table { font-size: 13px; }
       .pr-table th, .pr-table td { padding: 8px 10px; }
@@ -379,26 +320,6 @@
   </style>
 </head>
 <body>
-  <div id="setup-overlay" class="setup-overlay" style="display:none;">
-    <div class="setup-card">
-      <h2>Configure Dashboard</h2>
-      <p>Enter a GitHub personal access token (with <code>repo</code> scope) and the repos you want to track.</p>
-      <div class="form-group">
-        <label for="token-input">GitHub Token</label>
-        <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
-        <div class="hint">Stored locally in your browser only. Never sent anywhere except GitHub's API.</div>
-      </div>
-      <div class="form-group">
-        <label for="repos-input">Repositories (owner/repo, one per line)</label>
-        <textarea id="repos-input" placeholder="kedro-org/kedro&#10;kedro-org/kedro-plugins&#10;kedro-org/kedro-viz"></textarea>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
-        <button id="setup-cancel" style="display:none;">Cancel</button>
-        <button id="setup-save" class="btn-primary">Save & Load</button>
-      </div>
-    </div>
-  </div>
-
   <header>
     <h1>
       <svg width="20" height="20" viewBox="0 0 16 16"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
@@ -406,10 +327,6 @@
     </h1>
     <div class="header-actions">
       <span id="last-updated" class="time-ago"></span>
-      <button id="refresh-btn" onclick="fetchAllPRs()">Refresh</button>
-      <button class="settings-btn" onclick="showSetup(true)" title="Settings">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8.2 8.2 0 01.701.031C9.444.095 9.99.645 10.16 1.29l.17.638c.196.742.792 1.25 1.477 1.392.443.092.89.226 1.325.4a1.64 1.64 0 001.97-.513l.408-.537a1.64 1.64 0 012.243-.2 8.25 8.25 0 01.548.467 1.64 1.64 0 01.2 2.243l-.408.537a1.64 1.64 0 00-.107 2.017c.253.559.454 1.142.601 1.748.09.372.506.86 1.152 1.027l.638.17c.646.17 1.196.716 1.26 1.46a8.3 8.3 0 010 1.402c-.064.744-.614 1.29-1.26 1.46l-.638.17c-.646.168-1.062.655-1.152 1.027a6.5 6.5 0 01-.6 1.748 1.64 1.64 0 00.106 2.017l.408.537a1.64 1.64 0 01-.2 2.243 8.2 8.2 0 01-.548.467 1.64 1.64 0 01-2.243-.2l-.408-.537a1.64 1.64 0 00-1.97-.513 6.5 6.5 0 01-1.325.4c-.685.143-1.28.65-1.477 1.392l-.17.638c-.17.646-.716 1.196-1.46 1.26a8.2 8.2 0 01-1.402 0c-.744-.064-1.29-.614-1.46-1.26l-.17-.638c-.196-.742-.792-1.25-1.477-1.392a6.5 6.5 0 01-1.325-.4 1.64 1.64 0 00-1.97.513l-.408.537a1.64 1.64 0 01-2.243.2 8.2 8.2 0 01-.548-.467 1.64 1.64 0 01-.2-2.243l.408-.537a1.64 1.64 0 00.107-2.017A6.5 6.5 0 011.928 10.7c-.09-.372-.506-.86-1.152-1.027l-.638-.17C-.508 9.333-1.058 8.787-1.122 8.043a8.2 8.2 0 010-1.402C-1.058 5.897-.508 5.35.138 5.18l.638-.17c.646-.168 1.062-.655 1.152-1.027.147-.606.348-1.189.601-1.748A1.64 1.64 0 002.422 .218l-.408-.537A1.64 1.64 0 014.257-.52a8.2 8.2 0 01.548.467 1.64 1.64 0 002.243.2" transform="scale(0.58) translate(5.5,5.5)"/></svg>
-      </button>
     </div>
   </header>
 
@@ -445,54 +362,16 @@
     </div>
 
     <div id="pr-list">
-      <div class="empty-state">Configure your repos to get started.</div>
+      <div class="loading"><div class="loading-spinner"></div>Loading PR data...</div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'pr-dashboard-config';
-    const CACHE_KEY = 'pr-dashboard-cache';
     let allPRs = [];
     let activeReviewerFilter = null;
 
-    function getConfig() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; }
-    }
-
-    function saveConfig(token, repos) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, repos }));
-    }
-
-    function showSetup(isEdit) {
-      const overlay = document.getElementById('setup-overlay');
-      const cancelBtn = document.getElementById('setup-cancel');
-      overlay.style.display = 'flex';
-      if (isEdit) {
-        cancelBtn.style.display = 'inline-block';
-        const config = getConfig();
-        if (config) {
-          document.getElementById('token-input').value = config.token;
-          document.getElementById('repos-input').value = config.repos.join('\n');
-        }
-      }
-    }
-
-    document.getElementById('setup-cancel').addEventListener('click', () => {
-      document.getElementById('setup-overlay').style.display = 'none';
-    });
-
-    document.getElementById('setup-save').addEventListener('click', () => {
-      const token = document.getElementById('token-input').value.trim();
-      const reposRaw = document.getElementById('repos-input').value.trim();
-      if (!token || !reposRaw) return alert('Please fill in both fields.');
-      const repos = reposRaw.split('\n').map(r => r.trim()).filter(Boolean);
-      saveConfig(token, repos);
-      document.getElementById('setup-overlay').style.display = 'none';
-      populateRepoFilter(repos);
-      fetchAllPRs();
-    });
-
-    function populateRepoFilter(repos) {
+    function populateRepoFilter(prs) {
+      const repos = [...new Set(prs.map(pr => pr.repo))];
       const sel = document.getElementById('repo-filter');
       sel.innerHTML = '<option value="all">All repos</option>';
       repos.forEach(r => {
@@ -503,93 +382,21 @@
       });
     }
 
-    async function ghFetch(url, token) {
-      const res = await fetch(url, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
-      });
-      if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-      return res.json();
-    }
-
-    async function fetchPRsForRepo(repo, token) {
-      const [openPRs, closedPRs] = await Promise.all([
-        ghFetch(`https://api.github.com/repos/${repo}/pulls?state=open&per_page=100&sort=updated&direction=desc`, token),
-        ghFetch(`https://api.github.com/repos/${repo}/pulls?state=closed&per_page=30&sort=updated&direction=desc`, token),
-      ]);
-
-      const allRepoPRs = [...openPRs, ...closedPRs.filter(pr => pr.merged_at)];
-      const enriched = await Promise.all(allRepoPRs.map(async pr => {
-        let reviews = [];
-        try {
-          reviews = await ghFetch(`https://api.github.com/repos/${repo}/pulls/${pr.number}/reviews`, token);
-        } catch {}
-
-        const reviewerMap = new Map();
-        if (pr.requested_reviewers) {
-          pr.requested_reviewers.forEach(r => {
-            reviewerMap.set(r.login, { user: r, state: 'PENDING' });
-          });
-        }
-        reviews.forEach(r => {
-          if (r.user.login === pr.user.login) return;
-          const existing = reviewerMap.get(r.user.login);
-          if (!existing || r.submitted_at > (existing.submitted_at || '')) {
-            reviewerMap.set(r.user.login, { user: r.user, state: r.state, submitted_at: r.submitted_at });
-          }
-        });
-
-        let status;
-        if (pr.draft) {
-          status = 'draft';
-        } else if (pr.merged_at) {
-          status = 'merged';
-        } else {
-          const reviewStates = [...reviewerMap.values()].map(v => v.state);
-          if (reviewStates.includes('CHANGES_REQUESTED')) status = 'changes_requested';
-          else if (reviewStates.includes('APPROVED')) status = 'approved';
-          else if (reviewStates.some(s => s === 'COMMENTED' || s === 'DISMISSED')) status = 'in_review';
-          else if (reviewStates.length > 0 && reviewStates.every(s => s === 'PENDING')) status = 'needs_review';
-          else if (reviewerMap.size === 0) status = 'needs_review';
-          else status = 'needs_review';
-        }
-
-        return {
-          id: pr.id,
-          number: pr.number,
-          title: pr.title,
-          url: pr.html_url,
-          repo,
-          repoShort: repo.split('/').pop(),
-          author: pr.user,
-          draft: pr.draft,
-          merged: !!pr.merged_at,
-          status,
-          reviewers: [...reviewerMap.values()],
-          created_at: pr.created_at,
-          updated_at: pr.updated_at,
-          additions: pr.additions,
-          deletions: pr.deletions,
-          labels: pr.labels || [],
-        };
-      }));
-
-      return enriched;
-    }
-
-    async function fetchAllPRs() {
-      const config = getConfig();
-      if (!config) return showSetup(false);
-
-      document.getElementById('pr-list').innerHTML = '<div class="loading"><div class="loading-spinner"></div>Fetching PRs from ' + config.repos.length + ' repos...</div>';
-
+    async function loadData() {
       try {
-        const results = await Promise.all(config.repos.map(repo => fetchPRsForRepo(repo, config.token)));
-        allPRs = results.flat();
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data: allPRs }));
-        document.getElementById('last-updated').textContent = 'Updated just now';
+        const res = await fetch('data.json');
+        if (!res.ok) throw new Error('data.json not found — the GitHub Action may not have run yet.');
+        const data = await res.json();
+        allPRs = data.prs;
+
+        if (data.updated_at) {
+          document.getElementById('last-updated').textContent = 'Data from ' + timeAgo(data.updated_at);
+        }
+
+        populateRepoFilter(allPRs);
         renderAll();
       } catch (err) {
-        document.getElementById('pr-list').innerHTML = `<div class="empty-state">Error loading PRs: ${err.message}<br><br><button onclick="showSetup(true)">Check Settings</button></div>`;
+        document.getElementById('pr-list').innerHTML = `<div class="empty-state">Could not load PR data: ${err.message}<br><br>Make sure the GitHub Action has run at least once.</div>`;
       }
     }
 
@@ -609,7 +416,7 @@
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
         if (statusFilter !== 'all' && pr.status !== statusFilter) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
-        if (activeReviewerFilter && !pr.reviewers.some(r => r.user.login === activeReviewerFilter)) return false;
+        if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
         return true;
       });
 
@@ -651,10 +458,11 @@
       const reviewerCounts = new Map();
       allPRs.filter(pr => !pr.merged).forEach(pr => {
         pr.reviewers.forEach(r => {
-          const entry = reviewerCounts.get(r.user.login) || { user: r.user, pending: 0, total: 0 };
+          const login = r.login;
+          const entry = reviewerCounts.get(login) || { login, avatar_url: r.avatar_url, pending: 0, total: 0 };
           entry.total++;
           if (r.state === 'PENDING') entry.pending++;
-          reviewerCounts.set(r.user.login, entry);
+          reviewerCounts.set(login, entry);
         });
       });
 
@@ -672,7 +480,7 @@
         </div>
         ${sorted.map(([login, data]) => `
           <div class="reviewer-chip ${activeReviewerFilter === login ? 'active' : ''}" onclick="setReviewerFilter('${login}')">
-            <img src="${data.user.avatar_url}&s=48" alt="${login}">
+            <img src="${data.avatar_url}&s=48" alt="${login}">
             ${login}
             <span class="chip-count" title="${data.pending} pending">${data.total}</span>
           </div>
@@ -751,8 +559,8 @@
                   <div class="reviewer-avatars">
                     ${pr.reviewers.length === 0 ? '<span style="color:var(--text-muted);font-size:13px;">None</span>' :
                       pr.reviewers.map(r => `
-                        <div class="reviewer-avatar tooltip" data-tooltip="${r.user.login}: ${reviewStateLabel[r.state] || r.state}">
-                          <img src="${r.user.avatar_url}&s=48" alt="${r.user.login}">
+                        <div class="reviewer-avatar tooltip" data-tooltip="${r.login}: ${reviewStateLabel[r.state] || r.state}">
+                          <img src="${r.avatar_url}&s=48" alt="${r.login}">
                           <div class="review-state-dot ${reviewDotClass[r.state] || 'review-dot-pending'}"></div>
                         </div>
                       `).join('')
@@ -798,21 +606,7 @@
       document.getElementById(id).addEventListener('change', renderTable);
     });
 
-    // Init
-    const config = getConfig();
-    if (config) {
-      populateRepoFilter(config.repos);
-      const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      if (cache && Date.now() - cache.time < 5 * 60 * 1000) {
-        allPRs = cache.data;
-        document.getElementById('last-updated').textContent = 'Updated ' + timeAgo(new Date(cache.time).toISOString());
-        renderAll();
-      } else {
-        fetchAllPRs();
-      }
-    } else {
-      showSetup(false);
-    }
+    loadData();
   </script>
 </body>
 </html>
