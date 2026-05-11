@@ -70,7 +70,7 @@
     button:hover { background: var(--surface-hover); cursor: pointer; }
     button:focus, select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.3); }
 
-    .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .main-content { padding: 24px; max-width: 1600px; margin: 0 auto; }
 
     .stats-bar {
       display: grid;
@@ -153,6 +153,36 @@
       text-align: center;
     }
 
+    /* View toggle */
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .view-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    .view-toggle button svg { fill: currentColor; }
+
+    /* Table view */
     .pr-table {
       width: 100%;
       border-collapse: collapse;
@@ -312,7 +342,173 @@
 
     .tooltip:hover::after { opacity: 1; }
 
+    /* Board view */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .board-column {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .board-column-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      border-radius: 8px 8px 0 0;
+      z-index: 1;
+    }
+
+    .board-column-header .col-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .board-column-header .col-count {
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--border);
+      padding: 1px 7px;
+      border-radius: 10px;
+      color: var(--text-muted);
+    }
+
+    .col-draft .col-title { color: var(--text-muted); }
+    .col-needs_review .col-title { color: var(--yellow); }
+    .col-in_review .col-title { color: var(--accent); }
+    .col-changes_requested .col-title { color: var(--red); }
+    .col-approved .col-title { color: var(--green); }
+    .col-merged .col-title { color: var(--purple); }
+
+    .board-column-body {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .board-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .board-card:hover { border-color: var(--accent); }
+
+    .board-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .board-card-title a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .board-card-title a:hover { color: var(--accent); }
+
+    .board-card-title .pr-number {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 12px;
+    }
+
+    .board-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 6px;
+    }
+
+    .board-card-author {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .board-card-author img {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+    }
+
+    .board-card-reviewers {
+      display: flex;
+      gap: 2px;
+    }
+
+    .board-card-reviewers .reviewer-avatar img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .board-card-reviewers .review-state-dot {
+      width: 10px;
+      height: 10px;
+      bottom: -1px;
+      right: -1px;
+    }
+
+    .board-card-repo {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    .board-card-labels {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .board-card-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .board-empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px 8px;
+    }
+
+    @media (max-width: 1200px) {
+      .board { grid-template-columns: repeat(3, 1fr); }
+    }
+
     @media (max-width: 768px) {
+      .board { grid-template-columns: 1fr; }
       .pr-table { font-size: 13px; }
       .pr-table th, .pr-table td { padding: 8px 10px; }
       .hide-mobile { display: none; }
@@ -327,6 +523,16 @@
     </h1>
     <div class="header-actions">
       <span id="last-updated" class="time-ago"></span>
+      <div class="view-toggle">
+        <button id="view-table" class="active" onclick="setView('table')" title="Table view">
+          <svg width="14" height="14" viewBox="0 0 16 16"><path d="M0 1.5A1.5 1.5 0 011.5 0h13A1.5 1.5 0 0116 1.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 010 14.5zM1.5 1a.5.5 0 00-.5.5V4h4V1zM5 5H1v4h4zm0 5H1v4.5a.5.5 0 00.5.5H5zm1 4.5h4V10H6zm4-5.5H6V5h4zm0-5H6V1h4zm1 0V4h4V1.5a.5.5 0 00-.5-.5H11zm4 1.5h-4v4h4zm0 5h-4v4h3.5a.5.5 0 00.5-.5z"/></svg>
+          Table
+        </button>
+        <button id="view-board" onclick="setView('board')" title="Board view">
+          <svg width="14" height="14" viewBox="0 0 16 16"><path d="M1 2a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1zm4 0a1 1 0 011-1h2a1 1 0 011 1v8a1 1 0 01-1 1H6a1 1 0 01-1-1zm5-1a1 1 0 00-1 1v5a1 1 0 001 1h2a1 1 0 001-1V2a1 1 0 00-1-1z"/></svg>
+          Board
+        </button>
+      </div>
     </div>
   </header>
 
@@ -369,6 +575,49 @@
   <script>
     let allPRs = [];
     let activeReviewerFilter = null;
+    let currentView = 'table';
+
+    const COLUMNS = [
+      { key: 'draft', label: 'Draft' },
+      { key: 'needs_review', label: 'Needs Review' },
+      { key: 'in_review', label: 'In Review' },
+      { key: 'changes_requested', label: 'Changes Req.' },
+      { key: 'approved', label: 'Approved' },
+      { key: 'merged', label: 'Merged' },
+    ];
+
+    const REVIEW_DOT_CLASS = {
+      PENDING: 'review-dot-pending',
+      APPROVED: 'review-dot-approved',
+      CHANGES_REQUESTED: 'review-dot-changes',
+      COMMENTED: 'review-dot-commented',
+      DISMISSED: 'review-dot-pending',
+    };
+
+    const REVIEW_STATE_LABEL = {
+      PENDING: 'Pending',
+      APPROVED: 'Approved',
+      CHANGES_REQUESTED: 'Changes requested',
+      COMMENTED: 'Commented',
+      DISMISSED: 'Dismissed',
+    };
+
+    const STATUS_LABELS = {
+      needs_review: '<span class="status-badge status-needs-review">Needs Review</span>',
+      in_review: '<span class="status-badge status-in-review">In Review</span>',
+      approved: '<span class="status-badge status-approved">Approved</span>',
+      changes_requested: '<span class="status-badge status-changes-requested">Changes Requested</span>',
+      draft: '<span class="status-badge status-draft">Draft</span>',
+      merged: '<span class="status-badge status-merged">Merged</span>',
+    };
+
+    function setView(view) {
+      currentView = view;
+      document.getElementById('view-table').classList.toggle('active', view === 'table');
+      document.getElementById('view-board').classList.toggle('active', view === 'board');
+      document.getElementById('status-filter').style.display = view === 'board' ? 'none' : '';
+      renderView();
+    }
 
     function populateRepoFilter(prs) {
       const repos = [...new Set(prs.map(pr => pr.repo))];
@@ -403,7 +652,12 @@
     function renderAll() {
       renderStats();
       renderReviewerChips();
-      renderTable();
+      renderView();
+    }
+
+    function renderView() {
+      if (currentView === 'board') renderBoard();
+      else renderTable();
     }
 
     function getFilteredPRs() {
@@ -414,7 +668,7 @@
 
       let prs = allPRs.filter(pr => {
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
-        if (statusFilter !== 'all' && pr.status !== statusFilter) return false;
+        if (currentView !== 'board' && statusFilter !== 'all' && pr.status !== statusFilter) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
         if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
         return true;
@@ -491,7 +745,65 @@
     function setReviewerFilter(login) {
       activeReviewerFilter = login;
       renderReviewerChips();
-      renderTable();
+      renderView();
+    }
+
+    function renderReviewerAvatars(reviewers, small) {
+      if (reviewers.length === 0) return '<span style="color:var(--text-muted);font-size:12px;">None</span>';
+      return reviewers.map(r => `
+        <div class="reviewer-avatar tooltip" data-tooltip="${r.login}: ${REVIEW_STATE_LABEL[r.state] || r.state}">
+          <img src="${r.avatar_url}&s=48" alt="${r.login}">
+          <div class="review-state-dot ${REVIEW_DOT_CLASS[r.state] || 'review-dot-pending'}"></div>
+        </div>
+      `).join('');
+    }
+
+    function renderBoard() {
+      const prs = getFilteredPRs();
+      const grouped = {};
+      COLUMNS.forEach(col => grouped[col.key] = []);
+      prs.forEach(pr => {
+        if (grouped[pr.status]) grouped[pr.status].push(pr);
+      });
+
+      document.getElementById('pr-list').innerHTML = `
+        <div class="board">
+          ${COLUMNS.map(col => `
+            <div class="board-column">
+              <div class="board-column-header col-${col.key}">
+                <span class="col-title">${col.label}</span>
+                <span class="col-count">${grouped[col.key].length}</span>
+              </div>
+              <div class="board-column-body">
+                ${grouped[col.key].length === 0
+                  ? '<div class="board-empty">No PRs</div>'
+                  : grouped[col.key].map(pr => `
+                    <div class="board-card">
+                      <div class="board-card-title">
+                        <a href="${pr.url}" target="_blank" rel="noopener">
+                          ${escapeHtml(pr.title)} <span class="pr-number">#${pr.number}</span>
+                        </a>
+                      </div>
+                      ${pr.labels.length ? `<div class="board-card-labels">${pr.labels.map(l => `<span style="background:#${l.color};color:${getContrastColor(l.color)};padding:0 5px;border-radius:8px;font-size:10px;">${escapeHtml(l.name)}</span>`).join('')}</div>` : ''}
+                      <span class="board-card-repo">${pr.repoShort}</span>
+                      <div class="board-card-meta">
+                        <div class="board-card-author">
+                          <img src="${pr.author.avatar_url}&s=48" alt="${pr.author.login}">
+                          ${pr.author.login}
+                        </div>
+                        <div class="board-card-reviewers reviewer-avatars">
+                          ${renderReviewerAvatars(pr.reviewers, true)}
+                        </div>
+                      </div>
+                      <div class="board-card-time">${timeAgo(pr.updated_at)}</div>
+                    </div>
+                  `).join('')
+                }
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     function renderTable() {
@@ -501,31 +813,6 @@
         document.getElementById('pr-list').innerHTML = '<div class="empty-state">No PRs match your filters.</div>';
         return;
       }
-
-      const statusLabels = {
-        needs_review: '<span class="status-badge status-needs-review">Needs Review</span>',
-        in_review: '<span class="status-badge status-in-review">In Review</span>',
-        approved: '<span class="status-badge status-approved">Approved</span>',
-        changes_requested: '<span class="status-badge status-changes-requested">Changes Requested</span>',
-        draft: '<span class="status-badge status-draft">Draft</span>',
-        merged: '<span class="status-badge status-merged">Merged</span>',
-      };
-
-      const reviewDotClass = {
-        PENDING: 'review-dot-pending',
-        APPROVED: 'review-dot-approved',
-        CHANGES_REQUESTED: 'review-dot-changes',
-        COMMENTED: 'review-dot-commented',
-        DISMISSED: 'review-dot-pending',
-      };
-
-      const reviewStateLabel = {
-        PENDING: 'Pending',
-        APPROVED: 'Approved',
-        CHANGES_REQUESTED: 'Changes requested',
-        COMMENTED: 'Commented',
-        DISMISSED: 'Dismissed',
-      };
 
       document.getElementById('pr-list').innerHTML = `
         <table class="pr-table">
@@ -548,7 +835,7 @@
                   </a>
                   ${pr.labels.length ? `<div style="margin-top:4px">${pr.labels.map(l => `<span style="background:#${l.color};color:${getContrastColor(l.color)};padding:1px 6px;border-radius:10px;font-size:11px;margin-right:4px;">${escapeHtml(l.name)}</span>`).join('')}</div>` : ''}
                 </td>
-                <td>${statusLabels[pr.status]}</td>
+                <td>${STATUS_LABELS[pr.status]}</td>
                 <td>
                   <div class="author-cell">
                     <img src="${pr.author.avatar_url}&s=48" alt="${pr.author.login}">
@@ -557,14 +844,7 @@
                 </td>
                 <td>
                   <div class="reviewer-avatars">
-                    ${pr.reviewers.length === 0 ? '<span style="color:var(--text-muted);font-size:13px;">None</span>' :
-                      pr.reviewers.map(r => `
-                        <div class="reviewer-avatar tooltip" data-tooltip="${r.login}: ${reviewStateLabel[r.state] || r.state}">
-                          <img src="${r.avatar_url}&s=48" alt="${r.login}">
-                          <div class="review-state-dot ${reviewDotClass[r.state] || 'review-dot-pending'}"></div>
-                        </div>
-                      `).join('')
-                    }
+                    ${renderReviewerAvatars(pr.reviewers, false)}
                   </div>
                 </td>
                 <td><span class="pr-repo">${pr.repoShort}</span></td>
@@ -602,8 +882,8 @@
     }
 
     ['search-input', 'status-filter', 'repo-filter', 'sort-select'].forEach(id => {
-      document.getElementById(id).addEventListener('input', renderTable);
-      document.getElementById(id).addEventListener('change', renderTable);
+      document.getElementById(id).addEventListener('input', renderView);
+      document.getElementById(id).addEventListener('change', renderView);
     });
 
     loadData();
