@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wizard Rota - Kedro Community Dashboard</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-hover: #1c2129;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --orange: #db6d28;
+      --pink: #f778ba;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 20px; font-weight: 600; }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .header-actions a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .header-actions a:hover { background: var(--surface-hover); }
+    .header-actions a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Auth gate */
+    .auth-gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 24px;
+    }
+
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .auth-box h2 { font-size: 20px; margin-bottom: 8px; }
+
+    .auth-box p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .auth-input:focus { outline: none; border-color: var(--accent); }
+
+    .auth-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .auth-btn:hover { opacity: 0.9; }
+
+    .auth-error {
+      color: var(--red);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* Main content */
+    .main-content {
+      padding: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: none;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .page-header-left .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .page-header-left .page-desc {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* View toggle */
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      background: var(--surface);
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .view-toggle button:not(:last-child) { border-right: 1px solid var(--border); }
+    .view-toggle button:hover { background: var(--surface-hover); }
+    .view-toggle button.active { background: var(--accent); color: #fff; }
+
+    /* Calendar controls */
+    .calendar-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .nav-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .nav-btn:hover { background: var(--surface-hover); }
+
+    .calendar-range { font-size: 14px; font-weight: 600; }
+
+    /* ===== LIST VIEW ===== */
+    .week-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .week-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 48px;
+      gap: 12px;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .week-row.is-current {
+      border-color: var(--purple);
+      background: rgba(188,140,255,0.06);
+    }
+
+    .week-row.is-past { opacity: 0.5; }
+
+    .week-dates { font-size: 13px; color: var(--text-muted); }
+
+    .week-dates .week-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--purple);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .week-row.is-past .week-dates .week-label { color: var(--text-muted); }
+
+    .wizard-select {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+
+    .wizard-select:focus { outline: none; border-color: var(--accent); }
+
+    .wizard-avatar-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+    }
+
+    .week-row.is-current .wizard-avatar-small { border-color: var(--purple); }
+
+    .empty-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px dashed var(--border);
+    }
+
+    /* ===== CALENDAR VIEW ===== */
+    .cal-container { display: none; }
+
+    .cal-month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .cal-month-title { font-size: 16px; font-weight: 700; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .cal-header-cell {
+      background: var(--surface);
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .cal-cell {
+      background: var(--bg);
+      min-height: 80px;
+      padding: 6px;
+      position: relative;
+      cursor: default;
+    }
+
+    .cal-cell.outside { background: var(--surface); opacity: 0.4; }
+    .cal-cell.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+
+    .cal-day-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .cal-cell.is-today .cal-day-num { color: var(--accent); }
+
+    .cal-wizard-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .cal-wizard-chip img {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .cal-wizard-chip.is-start { border-radius: 4px 0 0 4px; }
+    .cal-wizard-chip.is-mid { border-radius: 0; }
+    .cal-wizard-chip.is-end { border-radius: 0 4px 4px 0; }
+    .cal-wizard-chip.is-single { border-radius: 4px; }
+
+    .cal-unassigned {
+      display: block;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .cal-unassigned:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Calendar popup for assigning */
+    .cal-popup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .cal-popup.visible { display: flex; }
+
+    .cal-popup-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 320px;
+    }
+
+    .cal-popup-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .cal-popup-dates {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .cal-popup-box select {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .cal-popup-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .cal-popup-actions button {
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+    }
+
+    .popup-save { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .popup-cancel { background: var(--surface); color: var(--text); }
+
+    /* Wizard color legend */
+    .cal-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .cal-legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    /* Actions bar */
+    .actions-bar {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary { background: var(--green); color: #fff; border-color: var(--green); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: var(--surface); color: var(--text); }
+    .btn-secondary:hover { background: var(--surface-hover); }
+    .btn-auto { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .btn-auto:hover { opacity: 0.9; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--green);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    @media (max-width: 640px) {
+      .week-row { grid-template-columns: 1fr; gap: 8px; }
+      .wizard-avatar-small, .empty-avatar { display: none; }
+      .cal-cell { min-height: 60px; }
+      .cal-wizard-chip span { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kedro Community Dashboard</h1>
+    <div class="header-actions">
+      <a href="index.html">Home</a>
+      <a href="reviews.html">PR Reviews</a>
+      <a href="rota.html" class="active">Wizard Rota</a>
+    </div>
+  </header>
+
+  <div class="auth-gate" id="auth-gate">
+    <div class="auth-box">
+      <h2>Wizard Rota</h2>
+      <p>Enter the team passphrase to manage the wizard rotation schedule.</p>
+      <input type="password" class="auth-input" id="passphrase-input" placeholder="Team passphrase" autocomplete="off">
+      <button class="auth-btn" id="auth-btn">Enter</button>
+      <div class="auth-error" id="auth-error">Incorrect passphrase. Ask a team member for access.</div>
+    </div>
+  </div>
+
+  <div class="main-content" id="main-content">
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">Wizard Rotation Schedule</div>
+        <div class="page-desc">Assign one wizard per week. Export as wizard.json to commit to the repo.</div>
+      </div>
+      <div class="view-toggle">
+        <button id="view-calendar" class="active" onclick="setView('calendar')">Calendar</button>
+        <button id="view-list" onclick="setView('list')">List</button>
+      </div>
+    </div>
+
+    <!-- Calendar view -->
+    <div class="cal-container" id="cal-container">
+      <div class="cal-month-nav">
+        <button class="nav-btn" id="cal-prev-btn">&larr; Previous</button>
+        <span class="cal-month-title" id="cal-month-title"></span>
+        <button class="nav-btn" id="cal-next-btn">Next &rarr;</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend" id="cal-legend"></div>
+    </div>
+
+    <!-- List view -->
+    <div id="list-container">
+      <div class="calendar-controls">
+        <button class="nav-btn" id="prev-btn">&larr; Previous</button>
+        <span class="calendar-range" id="calendar-range"></span>
+        <button class="nav-btn" id="next-btn">Next &rarr;</button>
+      </div>
+      <div class="week-list" id="week-list"></div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="action-btn btn-auto" id="auto-fill-btn">Auto-fill empty weeks</button>
+      <button class="action-btn btn-primary" id="download-btn">Download wizard.json</button>
+      <button class="action-btn btn-secondary" id="copy-btn">Copy to clipboard</button>
+    </div>
+  </div>
+
+  <!-- Assignment popup -->
+  <div class="cal-popup" id="cal-popup">
+    <div class="cal-popup-box">
+      <div class="cal-popup-title">Assign Wizard</div>
+      <div class="cal-popup-dates" id="popup-dates"></div>
+      <select id="popup-select"></select>
+      <div class="cal-popup-actions">
+        <button class="popup-cancel" id="popup-cancel">Cancel</button>
+        <button class="popup-save" id="popup-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const PASSPHRASE_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+    const WEEKS_PER_PAGE = 12;
+    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const WIZARD_COLORS = [
+      '#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444',
+      '#ec4899','#06b6d4','#84cc16','#f97316','#6366f1',
+      '#14b8a6','#e879f9',
+    ];
+
+    let teamMembers = [];
+    let rotation = [];
+    let pageOffset = 0;
+    let calMonth = new Date().getMonth();
+    let calYear = new Date().getFullYear();
+    let currentView = 'calendar';
+    let popupWeek = null;
+
+    async function sha256(message) {
+      const data = new TextEncoder().encode(message);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      date.setDate(diff);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function addDays(d, n) {
+      const r = new Date(d);
+      r.setDate(r.getDate() + n);
+      return r;
+    }
+
+    function fmtDate(d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function fmtDisplay(d) {
+      return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+    }
+
+    function getWizardColor(github) {
+      const eligible = teamMembers.filter(m => !m.github.includes('[bot]'));
+      const idx = eligible.findIndex(m => m.github === github);
+      return WIZARD_COLORS[idx % WIZARD_COLORS.length];
+    }
+
+    function getAssignmentForDate(d) {
+      const ds = fmtDate(d);
+      return rotation.find(r => ds >= r.start && ds <= r.end);
+    }
+
+    function getAssignment(weekStart) {
+      return rotation.find(r => r.start === weekStart);
+    }
+
+    function setAssignment(weekStart, weekEnd, github) {
+      const idx = rotation.findIndex(r => r.start === weekStart);
+      if (!github) {
+        if (idx >= 0) rotation.splice(idx, 1);
+        return;
+      }
+      const member = teamMembers.find(m => m.github === github);
+      if (!member) return;
+      const entry = { github: member.github, name: member.name, start: weekStart, end: weekEnd };
+      if (idx >= 0) rotation[idx] = entry;
+      else rotation.push(entry);
+      rotation.sort((a, b) => a.start.localeCompare(b.start));
+    }
+
+    function isCurrentWeek(weekStart) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const mon = new Date(weekStart + 'T00:00:00');
+      const sun = addDays(mon, 6);
+      return today >= mon && today <= sun;
+    }
+
+    function isPastWeek(weekEnd) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return new Date(weekEnd + 'T23:59:59') < today;
+    }
+
+    function isToday(d) {
+      const today = new Date();
+      return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    }
+
+    // ===== VIEW TOGGLE =====
+    function setView(view) {
+      currentView = view;
+      document.getElementById('view-calendar').className = view === 'calendar' ? 'active' : '';
+      document.getElementById('view-list').className = view === 'list' ? 'active' : '';
+      document.getElementById('cal-container').style.display = view === 'calendar' ? 'block' : 'none';
+      document.getElementById('list-container').style.display = view === 'list' ? 'block' : 'none';
+      render();
+    }
+
+    // ===== CALENDAR VIEW =====
+    function renderCalendar() {
+      document.getElementById('cal-month-title').textContent = `${MONTHS_FULL[calMonth]} ${calYear}`;
+
+      const firstOfMonth = new Date(calYear, calMonth, 1);
+      const lastOfMonth = new Date(calYear, calMonth + 1, 0);
+
+      let startDay = firstOfMonth.getDay();
+      if (startDay === 0) startDay = 7;
+      const calStart = addDays(firstOfMonth, -(startDay - 1));
+
+      const totalDays = (startDay - 1) + lastOfMonth.getDate();
+      const rows = Math.ceil(totalDays / 7);
+      const totalCells = rows * 7;
+
+      let html = '';
+      const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      for (const dn of dayNames) {
+        html += `<div class="cal-header-cell">${dn}</div>`;
+      }
+
+      for (let i = 0; i < totalCells; i++) {
+        const cellDate = addDays(calStart, i);
+        const outside = cellDate.getMonth() !== calMonth;
+        const today = isToday(cellDate);
+        const dayOfWeek = cellDate.getDay() === 0 ? 7 : cellDate.getDay();
+        const cls = [
+          'cal-cell',
+          outside ? 'outside' : '',
+          today ? 'is-today' : '',
+        ].filter(Boolean).join(' ');
+
+        const assignment = getAssignmentForDate(cellDate);
+        let chipHtml = '';
+
+        if (dayOfWeek === 1) {
+          const weekMon = new Date(cellDate);
+          const weekSun = addDays(weekMon, 6);
+          const weekStart = fmtDate(weekMon);
+          const weekEnd = fmtDate(weekSun);
+
+          if (assignment) {
+            const color = getWizardColor(assignment.github);
+            chipHtml = `<div class="cal-wizard-chip is-start" style="background:${color}" data-start="${weekStart}" data-end="${weekEnd}">
+              <img src="https://github.com/${assignment.github}.png?size=32" alt="">
+              <span>${assignment.name.split(' ')[0]}</span>
+            </div>`;
+          } else {
+            chipHtml = `<div class="cal-unassigned" data-start="${weekStart}" data-end="${weekEnd}">+ Assign</div>`;
+          }
+        } else if (assignment && dayOfWeek >= 2 && dayOfWeek <= 6) {
+          const color = getWizardColor(assignment.github);
+          const pos = dayOfWeek === 7 ? 'is-end' : 'is-mid';
+          chipHtml = `<div class="cal-wizard-chip ${pos}" style="background:${color}" data-start="${assignment.start}" data-end="${assignment.end}">&nbsp;</div>`;
+        } else if (assignment && dayOfWeek === 7) {
+          const color = getWizardColor(assignment.github);
+          chipHtml = `<div class="cal-wizard-chip is-end" style="background:${color}" data-start="${assignment.start}" data-end="${assignment.end}">&nbsp;</div>`;
+        }
+
+        html += `<div class="${cls}">
+          <div class="cal-day-num">${cellDate.getDate()}</div>
+          ${chipHtml}
+        </div>`;
+      }
+
+      document.getElementById('cal-grid').innerHTML = html;
+
+      document.querySelectorAll('.cal-wizard-chip, .cal-unassigned').forEach(el => {
+        el.addEventListener('click', () => openPopup(el.dataset.start, el.dataset.end));
+      });
+
+      renderLegend();
+    }
+
+    function renderLegend() {
+      const activeWizards = new Map();
+      for (const r of rotation) {
+        const rStart = new Date(r.start + 'T00:00:00');
+        const rEnd = new Date(r.end + 'T23:59:59');
+        const monthStart = new Date(calYear, calMonth, 1);
+        const monthEnd = new Date(calYear, calMonth + 1, 0, 23, 59, 59);
+        if (rStart <= monthEnd && rEnd >= monthStart) {
+          activeWizards.set(r.github, r.name);
+        }
+      }
+
+      const html = Array.from(activeWizards.entries()).map(([github, name]) =>
+        `<div class="cal-legend-item">
+          <div class="cal-legend-swatch" style="background:${getWizardColor(github)}"></div>
+          ${name}
+        </div>`
+      ).join('');
+
+      document.getElementById('cal-legend').innerHTML = html;
+    }
+
+    function openPopup(weekStart, weekEnd) {
+      popupWeek = { start: weekStart, end: weekEnd };
+      const mon = new Date(weekStart + 'T00:00:00');
+      const sun = new Date(weekEnd + 'T00:00:00');
+      document.getElementById('popup-dates').textContent = `${fmtDisplay(mon)} - ${fmtDisplay(sun)}, ${sun.getFullYear()}`;
+
+      const current = getAssignment(weekStart);
+      const options = ['<option value="">-- Unassigned --</option>'];
+      for (const m of teamMembers) {
+        const sel = current && current.github === m.github ? 'selected' : '';
+        options.push(`<option value="${m.github}" ${sel}>${m.name}</option>`);
+      }
+      document.getElementById('popup-select').innerHTML = options.join('');
+      document.getElementById('cal-popup').classList.add('visible');
+    }
+
+    function closePopup() {
+      document.getElementById('cal-popup').classList.remove('visible');
+      popupWeek = null;
+    }
+
+    // ===== LIST VIEW =====
+    function getWeeks() {
+      const baseMonday = getMonday(new Date());
+      const startMonday = addDays(baseMonday, pageOffset * 7 * WEEKS_PER_PAGE);
+      const weeks = [];
+      for (let i = 0; i < WEEKS_PER_PAGE; i++) {
+        const mon = addDays(startMonday, i * 7);
+        const sun = addDays(mon, 6);
+        weeks.push({ start: fmtDate(mon), end: fmtDate(sun), monday: mon, sunday: sun });
+      }
+      return weeks;
+    }
+
+    function renderList() {
+      const weeks = getWeeks();
+      const first = weeks[0].monday;
+      const last = weeks[weeks.length - 1].sunday;
+      document.getElementById('calendar-range').textContent =
+        `${fmtDisplay(first)} - ${fmtDisplay(last)}, ${last.getFullYear()}`;
+
+      const html = weeks.map(w => {
+        const assignment = getAssignment(w.start);
+        const current = isCurrentWeek(w.start);
+        const past = isPastWeek(w.end);
+        const cls = current ? 'is-current' : (past ? 'is-past' : '');
+
+        const options = teamMembers.map(m =>
+          `<option value="${m.github}" ${assignment && assignment.github === m.github ? 'selected' : ''}>${m.name}</option>`
+        ).join('');
+
+        const avatar = assignment
+          ? `<img class="wizard-avatar-small" src="https://github.com/${assignment.github}.png?size=64" alt="${assignment.name}">`
+          : '<div class="empty-avatar"></div>';
+
+        return `
+          <div class="week-row ${cls}">
+            <div class="week-dates">
+              ${current ? '<span class="week-label">This week</span>' : ''}
+              ${fmtDisplay(w.monday)} - ${fmtDisplay(w.sunday)}, ${w.sunday.getFullYear()}
+            </div>
+            <select class="wizard-select" data-start="${w.start}" data-end="${w.end}" ${past ? 'disabled' : ''}>
+              <option value="">-- Unassigned --</option>
+              ${options}
+            </select>
+            ${avatar}
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('week-list').innerHTML = html;
+
+      document.querySelectorAll('.wizard-select').forEach(sel => {
+        sel.addEventListener('change', (e) => {
+          setAssignment(e.target.dataset.start, e.target.dataset.end, e.target.value);
+          render();
+        });
+      });
+    }
+
+    // ===== RENDER =====
+    function render() {
+      if (currentView === 'calendar') renderCalendar();
+      else renderList();
+    }
+
+    function buildJson() {
+      return JSON.stringify({ rotation }, null, 2) + '\n';
+    }
+
+    function autoFill() {
+      const eligible = teamMembers.filter(m => !m.github.includes('[bot]'));
+      let lastIdx = -1;
+
+      const lastAssigned = rotation.filter(r => eligible.some(m => m.github === r.github)).pop();
+      if (lastAssigned) lastIdx = eligible.findIndex(m => m.github === lastAssigned.github);
+
+      if (currentView === 'calendar') {
+        const firstOfMonth = new Date(calYear, calMonth, 1);
+        const mon = getMonday(firstOfMonth);
+        const lastOfMonth = new Date(calYear, calMonth + 1, 0);
+        for (let d = new Date(mon); d <= lastOfMonth; d = addDays(d, 7)) {
+          const weekStart = fmtDate(d);
+          const weekEnd = fmtDate(addDays(d, 6));
+          if (isPastWeek(weekEnd)) continue;
+          if (getAssignment(weekStart)) continue;
+          lastIdx = (lastIdx + 1) % eligible.length;
+          setAssignment(weekStart, weekEnd, eligible[lastIdx].github);
+        }
+      } else {
+        const weeks = getWeeks();
+        for (const w of weeks) {
+          if (isPastWeek(w.end)) continue;
+          if (getAssignment(w.start)) continue;
+          lastIdx = (lastIdx + 1) % eligible.length;
+          setAssignment(w.start, w.end, eligible[lastIdx].github);
+        }
+      }
+      render();
+      showToast('Empty weeks filled with round-robin rotation');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    async function init() {
+      const stored = sessionStorage.getItem('rota_auth');
+      if (stored === 'ok') unlock();
+
+      document.getElementById('auth-btn').addEventListener('click', authenticate);
+      document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') authenticate();
+      });
+    }
+
+    async function authenticate() {
+      const input = document.getElementById('passphrase-input').value;
+      const hash = await sha256(input);
+      if (hash === PASSPHRASE_HASH) {
+        sessionStorage.setItem('rota_auth', 'ok');
+        unlock();
+      } else {
+        document.getElementById('auth-error').style.display = 'block';
+      }
+    }
+
+    async function unlock() {
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+
+      const [teamRes, wizardRes] = await Promise.all([
+        fetch('team.json'), fetch('wizard.json')
+      ]);
+
+      const teamList = teamRes.ok ? await teamRes.json() : [];
+      teamMembers = teamList
+        .filter(t => !t.includes('[bot]'))
+        .map(github => ({ github, name: github }));
+
+      const wizardData = wizardRes.ok ? await wizardRes.json() : { rotation: [] };
+      rotation = wizardData.rotation || [];
+
+      for (const r of rotation) {
+        const member = teamMembers.find(m => m.github === r.github);
+        if (member) member.name = r.name;
+      }
+
+      setView('calendar');
+
+      // List nav
+      document.getElementById('prev-btn').addEventListener('click', () => { pageOffset--; render(); });
+      document.getElementById('next-btn').addEventListener('click', () => { pageOffset++; render(); });
+
+      // Calendar nav
+      document.getElementById('cal-prev-btn').addEventListener('click', () => {
+        calMonth--;
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        render();
+      });
+      document.getElementById('cal-next-btn').addEventListener('click', () => {
+        calMonth++;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        render();
+      });
+
+      // Popup
+      document.getElementById('popup-cancel').addEventListener('click', closePopup);
+      document.getElementById('popup-save').addEventListener('click', () => {
+        if (!popupWeek) return;
+        setAssignment(popupWeek.start, popupWeek.end, document.getElementById('popup-select').value);
+        closePopup();
+        render();
+      });
+      document.getElementById('cal-popup').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('cal-popup')) closePopup();
+      });
+
+      // Actions
+      document.getElementById('auto-fill-btn').addEventListener('click', autoFill);
+      document.getElementById('download-btn').addEventListener('click', () => {
+        const blob = new Blob([buildJson()], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'wizard.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('wizard.json downloaded');
+      });
+      document.getElementById('copy-btn').addEventListener('click', async () => {
+        await navigator.clipboard.writeText(buildJson());
+        showToast('Copied wizard.json to clipboard');
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
