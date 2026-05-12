@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PR Review Dashboard</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-hover: #1c2129;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --orange: #db6d28;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 svg { fill: var(--text); }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button, select, input {
+      font-family: inherit;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      outline: none;
+    }
+
+    button:hover { background: var(--surface-hover); cursor: pointer; }
+    button:focus, select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.3); }
+
+    .main-content { padding: 24px; max-width: 1600px; margin: 0 auto; }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-number { font-size: 28px; font-weight: 700; }
+    .stat-card .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .filters-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filters-bar input[type="search"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      background: var(--bg);
+    }
+
+    .reviewer-summary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .reviewer-summary h3 { font-size: 14px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .reviewer-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .reviewer-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px 4px 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .reviewer-chip:hover, .reviewer-chip.active { border-color: var(--accent); }
+    .reviewer-chip.active { background: rgba(88,166,255,0.1); }
+
+    .reviewer-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    .reviewer-chip .chip-count {
+      background: var(--border);
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* View toggle */
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .view-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    .view-toggle button svg { fill: currentColor; }
+
+    /* Table view */
+    .pr-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pr-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .pr-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    .pr-table tr:last-child td { border-bottom: none; }
+    .pr-table tbody tr:hover { background: var(--surface-hover); }
+
+    .pr-title-cell { max-width: 400px; }
+    .pr-title-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .pr-title-link:hover { text-decoration: underline; }
+
+    .pr-repo {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .pr-number { color: var(--text-muted); font-weight: 400; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-needs-review { background: rgba(210,153,34,0.15); color: var(--yellow); }
+    .status-in-review { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .status-approved { background: rgba(63,185,80,0.15); color: var(--green); }
+    .status-changes-requested { background: rgba(248,81,73,0.15); color: var(--red); }
+    .status-draft { background: rgba(139,148,158,0.15); color: var(--text-muted); }
+    .status-merged { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+    .reviewer-warning {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--orange);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .reviewer-warning svg { fill: var(--orange); flex-shrink: 0; }
+
+    .pr-table tr.row-low-reviewers { background: rgba(219,109,40,0.06); }
+    .pr-table tr.row-low-reviewers:hover { background: rgba(219,109,40,0.1); }
+
+    .board-card.card-low-reviewers { border-color: var(--orange); border-style: dashed; }
+
+    .source-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .source-toggle button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .source-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .source-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    .reviewer-avatars {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .reviewer-avatar {
+      position: relative;
+      display: inline-block;
+    }
+
+    .reviewer-avatar img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+    }
+
+    .reviewer-avatar .review-state-dot {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+    }
+
+    .review-dot-pending { background: var(--yellow); }
+    .review-dot-approved { background: var(--green); }
+    .review-dot-changes { background: var(--red); }
+    .review-dot-commented { background: var(--accent); }
+
+    .author-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .author-cell img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    .time-ago { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .tooltip { position: relative; }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+
+    .tooltip:hover::after { opacity: 1; }
+
+    /* Board view */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .board-column {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .board-column-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      border-radius: 8px 8px 0 0;
+      z-index: 1;
+    }
+
+    .board-column-header .col-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .board-column-header .col-count {
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--border);
+      padding: 1px 7px;
+      border-radius: 10px;
+      color: var(--text-muted);
+    }
+
+    .col-draft .col-title { color: var(--text-muted); }
+    .col-needs_review .col-title { color: var(--yellow); }
+    .col-in_review .col-title { color: var(--accent); }
+    .col-changes_requested .col-title { color: var(--red); }
+    .col-approved .col-title { color: var(--green); }
+    .col-merged .col-title { color: var(--purple); }
+
+    .board-column-body {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .board-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .board-card:hover { border-color: var(--accent); }
+
+    .board-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .board-card-title a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .board-card-title a:hover { color: var(--accent); }
+
+    .board-card-title .pr-number {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 12px;
+    }
+
+    .board-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 6px;
+    }
+
+    .board-card-author {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .board-card-author img {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+    }
+
+    .board-card-reviewers {
+      display: flex;
+      gap: 2px;
+    }
+
+    .board-card-reviewers .reviewer-avatar img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .board-card-reviewers .review-state-dot {
+      width: 10px;
+      height: 10px;
+      bottom: -1px;
+      right: -1px;
+    }
+
+    .board-card-repo {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    .board-card-labels {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .board-card-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .board-empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px 8px;
+    }
+
+    @media (max-width: 1200px) {
+      .board { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .board { grid-template-columns: 1fr; }
+      .pr-table { font-size: 13px; }
+      .pr-table th, .pr-table td { padding: 8px 10px; }
+      .hide-mobile { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      <svg width="20" height="20" viewBox="0 0 16 16"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+      PR Review Dashboard
+    </h1>
+    <div class="header-actions">
+      <span id="last-updated" class="time-ago"></span>
+      <a href="index.html" style="color:var(--accent);text-decoration:none;font-size:14px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">Home</a>
+      <a href="rota.html" style="color:var(--accent);text-decoration:none;font-size:14px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">Wizard Rota</a>
+      <div class="view-toggle">
+        <button id="view-table" class="active" onclick="setView('table')" title="Table view">
+          <svg width="14" height="14" viewBox="0 0 16 16"><path d="M0 1.5A1.5 1.5 0 011.5 0h13A1.5 1.5 0 0116 1.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 010 14.5zM1.5 1a.5.5 0 00-.5.5V4h4V1zM5 5H1v4h4zm0 5H1v4.5a.5.5 0 00.5.5H5zm1 4.5h4V10H6zm4-5.5H6V5h4zm0-5H6V1h4zm1 0V4h4V1.5a.5.5 0 00-.5-.5H11zm4 1.5h-4v4h4zm0 5h-4v4h3.5a.5.5 0 00.5-.5z"/></svg>
+          Table
+        </button>
+        <button id="view-board" onclick="setView('board')" title="Board view">
+          <svg width="14" height="14" viewBox="0 0 16 16"><path d="M1 2a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1zm4 0a1 1 0 011-1h2a1 1 0 011 1v8a1 1 0 01-1 1H6a1 1 0 01-1-1zm5-1a1 1 0 00-1 1v5a1 1 0 001 1h2a1 1 0 001-1V2a1 1 0 00-1-1z"/></svg>
+          Board
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <div class="reviewer-summary" id="reviewer-summary" style="display:none;">
+      <h3>Review Load by Reviewer</h3>
+      <div class="reviewer-chips" id="reviewer-chips"></div>
+    </div>
+
+    <div class="filters-bar">
+      <div class="source-toggle">
+        <button id="source-community" class="active" onclick="setSourceFilter('community')">Community</button>
+        <button id="source-all" onclick="setSourceFilter('all')">All PRs</button>
+      </div>
+      <input type="search" id="search-input" placeholder="Search PRs by title, author, or repo...">
+      <select id="status-filter">
+        <option value="all">All statuses</option>
+        <option value="needs_review">Needs review</option>
+        <option value="in_review">In review</option>
+        <option value="approved">Approved</option>
+        <option value="changes_requested">Changes requested</option>
+        <option value="draft">Draft</option>
+      </select>
+      <select id="repo-filter">
+        <option value="all">All repos</option>
+      </select>
+      <select id="sort-select">
+        <option value="updated_desc">Recently updated</option>
+        <option value="updated_asc">Least recently updated</option>
+        <option value="created_desc">Newest first</option>
+        <option value="created_asc">Oldest first</option>
+        <option value="reviewers_desc">Most reviewers</option>
+      </select>
+    </div>
+
+    <div id="pr-list">
+      <div class="loading"><div class="loading-spinner"></div>Loading PR data...</div>
+    </div>
+  </div>
+
+  <script>
+    let allPRs = [];
+    let teamMembers = new Set();
+    let activeReviewerFilter = null;
+    let currentView = 'table';
+    let sourceFilter = 'community';
+
+    const COLUMNS = [
+      { key: 'draft', label: 'Draft' },
+      { key: 'needs_review', label: 'Needs Review' },
+      { key: 'in_review', label: 'In Review' },
+      { key: 'changes_requested', label: 'Changes Req.' },
+      { key: 'approved', label: 'Approved' },
+    ];
+
+    const REVIEW_DOT_CLASS = {
+      PENDING: 'review-dot-pending',
+      APPROVED: 'review-dot-approved',
+      CHANGES_REQUESTED: 'review-dot-changes',
+      COMMENTED: 'review-dot-commented',
+      DISMISSED: 'review-dot-pending',
+    };
+
+    const REVIEW_STATE_LABEL = {
+      PENDING: 'Pending',
+      APPROVED: 'Approved',
+      CHANGES_REQUESTED: 'Changes requested',
+      COMMENTED: 'Commented',
+      DISMISSED: 'Dismissed',
+    };
+
+    const STATUS_LABELS = {
+      needs_review: '<span class="status-badge status-needs-review">Needs Review</span>',
+      in_review: '<span class="status-badge status-in-review">In Review</span>',
+      approved: '<span class="status-badge status-approved">Approved</span>',
+      changes_requested: '<span class="status-badge status-changes-requested">Changes Requested</span>',
+      draft: '<span class="status-badge status-draft">Draft</span>',
+      merged: '<span class="status-badge status-merged">Merged</span>',
+    };
+
+    function setView(view) {
+      currentView = view;
+      document.getElementById('view-table').classList.toggle('active', view === 'table');
+      document.getElementById('view-board').classList.toggle('active', view === 'board');
+      document.getElementById('status-filter').style.display = view === 'board' ? 'none' : '';
+      renderView();
+    }
+
+    function populateRepoFilter(prs) {
+      const repos = [...new Set(prs.map(pr => pr.repo))];
+      const sel = document.getElementById('repo-filter');
+      sel.innerHTML = '<option value="all">All repos</option>';
+      repos.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r.split('/').pop();
+        sel.appendChild(opt);
+      });
+    }
+
+    async function loadData() {
+      try {
+        const [dataRes, teamRes] = await Promise.all([
+          fetch('data.json'),
+          fetch('team.json'),
+        ]);
+        if (!dataRes.ok) throw new Error('data.json not found — the GitHub Action may not have run yet.');
+        const data = await dataRes.json();
+        allPRs = data.prs.filter(pr => pr.status !== 'merged');
+
+        if (teamRes.ok) {
+          const teamList = await teamRes.json();
+          teamMembers = new Set(teamList.map(t => (t.github || t).toLowerCase()));
+        }
+
+        if (data.updated_at) {
+          document.getElementById('last-updated').textContent = 'Data from ' + timeAgo(data.updated_at);
+        }
+
+        populateRepoFilter(allPRs);
+        renderAll();
+      } catch (err) {
+        document.getElementById('pr-list').innerHTML = `<div class="empty-state">Could not load PR data: ${err.message}<br><br>Make sure the GitHub Action has run at least once.</div>`;
+      }
+    }
+
+    function isCommunityPR(pr) {
+      return !teamMembers.has(pr.author.login.toLowerCase());
+    }
+
+    function setSourceFilter(value) {
+      sourceFilter = value;
+      document.getElementById('source-community').classList.toggle('active', value === 'community');
+      document.getElementById('source-all').classList.toggle('active', value === 'all');
+      renderAll();
+    }
+
+    function renderAll() {
+      renderStats();
+      renderReviewerChips();
+      renderView();
+    }
+
+    function renderView() {
+      renderStats();
+      if (currentView === 'board') renderBoard();
+      else renderTable();
+    }
+
+    function getFilteredPRs() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const statusFilter = document.getElementById('status-filter').value;
+      const repoFilter = document.getElementById('repo-filter').value;
+      const sort = document.getElementById('sort-select').value;
+
+      let prs = allPRs.filter(pr => {
+        if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
+        if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
+        if (currentView !== 'board' && statusFilter !== 'all' && pr.status !== statusFilter) return false;
+        if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
+        if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
+        return true;
+      });
+
+      prs.sort((a, b) => {
+        switch (sort) {
+          case 'updated_desc': return new Date(b.updated_at) - new Date(a.updated_at);
+          case 'updated_asc': return new Date(a.updated_at) - new Date(b.updated_at);
+          case 'created_desc': return new Date(b.created_at) - new Date(a.created_at);
+          case 'created_asc': return new Date(a.created_at) - new Date(b.created_at);
+          case 'reviewers_desc': return b.reviewers.length - a.reviewers.length;
+          default: return 0;
+        }
+      });
+
+      return prs;
+    }
+
+    function getStatsPRs() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const repoFilter = document.getElementById('repo-filter').value;
+
+      return allPRs.filter(pr => {
+        if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
+        if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
+        if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
+        if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
+        return true;
+      });
+    }
+
+    function renderStats() {
+      const filtered = getStatsPRs();
+      const stats = {
+        total: filtered.length,
+        needs_review: filtered.filter(pr => pr.status === 'needs_review').length,
+        in_review: filtered.filter(pr => pr.status === 'in_review').length,
+        approved: filtered.filter(pr => pr.status === 'approved').length,
+        changes_requested: filtered.filter(pr => pr.status === 'changes_requested').length,
+        draft: filtered.filter(pr => pr.status === 'draft').length,
+        low_reviewers: filtered.filter(pr => pr.status !== 'draft' && pr.reviewers.length < 2).length,
+      };
+
+      document.getElementById('stats-bar').innerHTML = `
+        <div class="stat-card"><div class="stat-number">${stats.total}</div><div class="stat-label">Open PRs</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--yellow)">${stats.needs_review}</div><div class="stat-label">Needs Review</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--accent)">${stats.in_review}</div><div class="stat-label">In Review</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--green)">${stats.approved}</div><div class="stat-label">Approved</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--red)">${stats.changes_requested}</div><div class="stat-label">Changes Req.</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--text-muted)">${stats.draft}</div><div class="stat-label">Draft</div></div>
+        <div class="stat-card"><div class="stat-number" style="color:var(--orange)">${stats.low_reviewers}</div><div class="stat-label">Need Reviewers</div></div>
+      `;
+    }
+
+    function renderReviewerChips() {
+      const reviewerCounts = new Map();
+      const sourcePRs = sourceFilter === 'community' ? allPRs.filter(isCommunityPR) : allPRs;
+      sourcePRs.forEach(pr => {
+        pr.reviewers.forEach(r => {
+          const login = r.login;
+          const entry = reviewerCounts.get(login) || { login, avatar_url: r.avatar_url, pending: 0, total: 0 };
+          entry.total++;
+          if (r.state === 'PENDING') entry.pending++;
+          reviewerCounts.set(login, entry);
+        });
+      });
+
+      if (reviewerCounts.size === 0) {
+        document.getElementById('reviewer-summary').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('reviewer-summary').style.display = 'block';
+      const sorted = [...reviewerCounts.entries()].sort((a, b) => b[1].total - a[1].total);
+
+      document.getElementById('reviewer-chips').innerHTML = `
+        <div class="reviewer-chip ${!activeReviewerFilter ? 'active' : ''}" onclick="setReviewerFilter(null)">
+          All
+        </div>
+        ${sorted.map(([login, data]) => `
+          <div class="reviewer-chip ${activeReviewerFilter === login ? 'active' : ''}" onclick="setReviewerFilter('${login}')">
+            <img src="${data.avatar_url}&s=48" alt="${login}">
+            ${login}
+            <span class="chip-count" title="${data.pending} pending">${data.total}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function setReviewerFilter(login) {
+      activeReviewerFilter = login;
+      renderReviewerChips();
+      renderView();
+    }
+
+    const WARN_ICON = '<svg width="12" height="12" viewBox="0 0 16 16"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575zM8 5a.75.75 0 00-.75.75v2.5a.75.75 0 001.5 0v-2.5A.75.75 0 008 5zm1 6a1 1 0 10-2 0 1 1 0 002 0z"/></svg>';
+
+    function lowReviewerWarning(pr) {
+      if (pr.status === 'draft') return '';
+      const count = pr.reviewers.length;
+      if (count >= 2) return '';
+      const msg = count === 0 ? 'No reviewers assigned' : 'Only 1 reviewer assigned';
+      return `<span class="reviewer-warning">${WARN_ICON} ${msg}</span>`;
+    }
+
+    function renderReviewerAvatars(reviewers, small) {
+      if (reviewers.length === 0) return '<span style="color:var(--text-muted);font-size:12px;">None</span>';
+      return reviewers.map(r => `
+        <div class="reviewer-avatar tooltip" data-tooltip="${r.login}: ${REVIEW_STATE_LABEL[r.state] || r.state}">
+          <img src="${r.avatar_url}&s=48" alt="${r.login}">
+          <div class="review-state-dot ${REVIEW_DOT_CLASS[r.state] || 'review-dot-pending'}"></div>
+        </div>
+      `).join('');
+    }
+
+    function renderBoard() {
+      const prs = getFilteredPRs();
+      const grouped = {};
+      COLUMNS.forEach(col => grouped[col.key] = []);
+      prs.forEach(pr => {
+        if (grouped[pr.status]) grouped[pr.status].push(pr);
+      });
+
+      document.getElementById('pr-list').innerHTML = `
+        <div class="board">
+          ${COLUMNS.map(col => `
+            <div class="board-column">
+              <div class="board-column-header col-${col.key}">
+                <span class="col-title">${col.label}</span>
+                <span class="col-count">${grouped[col.key].length}</span>
+              </div>
+              <div class="board-column-body">
+                ${grouped[col.key].length === 0
+                  ? '<div class="board-empty">No PRs</div>'
+                  : grouped[col.key].map(pr => {
+                    const needsMore = pr.status !== 'draft' && pr.reviewers.length < 2;
+                    return `
+                    <div class="board-card ${needsMore ? 'card-low-reviewers' : ''}">
+                      <div class="board-card-title">
+                        <a href="${pr.url}" target="_blank" rel="noopener">
+                          ${escapeHtml(pr.title)} <span class="pr-number">#${pr.number}</span>
+                        </a>
+                      </div>
+                      ${pr.labels.length ? `<div class="board-card-labels">${pr.labels.map(l => `<span style="background:#${l.color};color:${getContrastColor(l.color)};padding:0 5px;border-radius:8px;font-size:10px;">${escapeHtml(l.name)}</span>`).join('')}</div>` : ''}
+                      <span class="board-card-repo">${pr.repoShort}</span>
+                      <div class="board-card-meta">
+                        <div class="board-card-author">
+                          <img src="${pr.author.avatar_url}&s=48" alt="${pr.author.login}">
+                          ${pr.author.login}
+                        </div>
+                        <div class="board-card-reviewers reviewer-avatars">
+                          ${renderReviewerAvatars(pr.reviewers, true)}
+                        </div>
+                      </div>
+                      ${lowReviewerWarning(pr)}
+                      <div class="board-card-time">${timeAgo(pr.updated_at)}</div>
+                    </div>
+                  `}).join('')
+                }
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderTable() {
+      const prs = getFilteredPRs();
+
+      if (prs.length === 0) {
+        document.getElementById('pr-list').innerHTML = '<div class="empty-state">No PRs match your filters.</div>';
+        return;
+      }
+
+      document.getElementById('pr-list').innerHTML = `
+        <table class="pr-table">
+          <thead>
+            <tr>
+              <th>PR</th>
+              <th>Status</th>
+              <th>Author</th>
+              <th>Reviewers</th>
+              <th>Repo</th>
+              <th class="hide-mobile">Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${prs.map(pr => {
+              const needsMoreReviewers = pr.status !== 'draft' && pr.reviewers.length < 2;
+              return `
+              <tr class="${needsMoreReviewers ? 'row-low-reviewers' : ''}">
+                <td class="pr-title-cell">
+                  <a href="${pr.url}" target="_blank" rel="noopener" class="pr-title-link">
+                    ${escapeHtml(pr.title)} <span class="pr-number">#${pr.number}</span>
+                  </a>
+                  ${pr.labels.length ? `<div style="margin-top:4px">${pr.labels.map(l => `<span style="background:#${l.color};color:${getContrastColor(l.color)};padding:1px 6px;border-radius:10px;font-size:11px;margin-right:4px;">${escapeHtml(l.name)}</span>`).join('')}</div>` : ''}
+                </td>
+                <td>${STATUS_LABELS[pr.status]}</td>
+                <td>
+                  <div class="author-cell">
+                    <img src="${pr.author.avatar_url}&s=48" alt="${pr.author.login}">
+                    ${pr.author.login}
+                  </div>
+                </td>
+                <td>
+                  <div class="reviewer-avatars">
+                    ${renderReviewerAvatars(pr.reviewers, false)}
+                  </div>
+                  ${lowReviewerWarning(pr)}
+                </td>
+                <td><span class="pr-repo">${pr.repoShort}</span></td>
+                <td class="hide-mobile"><span class="time-ago">${timeAgo(pr.updated_at)}</span></td>
+              </tr>
+            `}).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getContrastColor(hex) {
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000' : '#fff';
+    }
+
+    function timeAgo(dateStr) {
+      const seconds = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+      if (seconds < 60) return 'just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}d ago`;
+      return new Date(dateStr).toLocaleDateString();
+    }
+
+    ['search-input', 'status-filter', 'repo-filter', 'sort-select'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderView);
+      document.getElementById(id).addEventListener('change', renderView);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>

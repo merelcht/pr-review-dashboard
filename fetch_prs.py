@@ -113,6 +113,97 @@ def fetch_repo(repo):
     return results
 
 
+def fetch_project_issues(org, project_number):
+    print(f"Fetching project board {org}/{project_number}...")
+    query = """
+    query($org: String!, $number: Int!) {
+      organization(login: $org) {
+        projectV2(number: $number) {
+          items(first: 100, orderBy: {field: POSITION, direction: ASC}) {
+            nodes {
+              content {
+                ... on Issue {
+                  title
+                  number
+                  url
+                  state
+                  repository { nameWithOwner }
+                  labels(first: 10) { nodes { name color } }
+                  author { login avatarUrl }
+                  createdAt
+                  updatedAt
+                }
+              }
+              fieldValues(first: 10) {
+                nodes {
+                  ... on ProjectV2ItemFieldSingleSelectValue {
+                    name
+                    field { ... on ProjectV2SingleSelectField { name } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+    variables = {"org": org, "number": project_number}
+    data = json.dumps({"query": query, "variables": variables}).encode()
+    req = urllib.request.Request(
+        "https://api.github.com/graphql",
+        data=data,
+        headers={**HEADERS, "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req) as resp:
+        result = json.loads(resp.read())
+
+    issues = []
+    items = (
+        result.get("data", {})
+        .get("organization", {})
+        .get("projectV2", {})
+        .get("items", {})
+        .get("nodes", [])
+    )
+    for item in items:
+        content = item.get("content")
+        if not content or not content.get("title"):
+            continue
+        if content.get("state") != "OPEN":
+            continue
+
+        status = ""
+        for fv in item.get("fieldValues", {}).get("nodes", []):
+            field = fv.get("field", {})
+            if field.get("name", "").lower() == "status":
+                status = fv.get("name", "")
+
+        issues.append(
+            {
+                "title": content["title"],
+                "number": content["number"],
+                "url": content["url"],
+                "repo": content.get("repository", {}).get("nameWithOwner", ""),
+                "author": {
+                    "login": content.get("author", {}).get("login", ""),
+                    "avatar_url": content.get("author", {}).get("avatarUrl", ""),
+                },
+                "labels": [
+                    {"name": l["name"], "color": l["color"]}
+                    for l in content.get("labels", {}).get("nodes", [])
+                ],
+                "status": status,
+                "created_at": content.get("createdAt", ""),
+                "updated_at": content.get("updatedAt", ""),
+            }
+        )
+
+    print(f"  Found {len(issues)} open issues on project board")
+    return issues
+
+
 def main():
     with open("repos.json") as f:
         repos = json.load(f)
@@ -126,10 +217,18 @@ def main():
     for repo in repos:
         all_prs.extend(fetch_repo(repo))
 
-    with open("data.json", "w") as f:
-        json.dump({"updated_at": "", "prs": all_prs}, f)
+    wizard_issues = []
+    try:
+        wizard_issues = fetch_project_issues("kedro-org", 10)
+    except Exception as e:
+        print(f"Warning: could not fetch project board: {e}")
 
-    print(f"Wrote {len(all_prs)} PRs to data.json")
+    with open("data.json", "w") as f:
+        json.dump(
+            {"updated_at": "", "prs": all_prs, "wizard_issues": wizard_issues}, f
+        )
+
+    print(f"Wrote {len(all_prs)} PRs and {len(wizard_issues)} issues to data.json")
 
 
 if __name__ == "__main__":

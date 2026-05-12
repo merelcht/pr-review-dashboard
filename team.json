@@ -1,15 +1,15 @@
 [
-  "AliceCima10",
-  "dependabot[bot]",
-  "ankatiyar",
-  "ElenaKhaustova",
-  "Huongg",
-  "iamelijahko",
-  "jitu5",
-  "Joseph-Perkins",
-  "lrcouto",
-  "merelcht",
-  "rashidakanchwala",
-  "ravi-kumar-pilla",
-  "SajidAlamQB"
+  { "github": "AliceCima10", "name": "Alice Cima", "wizard": false },
+  { "github": "ankatiyar", "name": "Ankita Katiyar", "wizard": true },
+  { "github": "dependabot[bot]", "name": "Dependabot", "wizard": false },
+  { "github": "ElenaKhaustova", "name": "Elena Khaustova", "wizard": true },
+  { "github": "Huongg", "name": "Huong", "wizard": false },
+  { "github": "iamelijahko", "name": "Elijah Ko", "wizard": false },
+  { "github": "jitu5", "name": "Jitendra Gundaniya", "wizard": true },
+  { "github": "Joseph-Perkins", "name": "Joseph Perkins", "wizard": false },
+  { "github": "lrcouto", "name": "Laura Couto", "wizard": true },
+  { "github": "merelcht", "name": "Merel Theisen", "wizard": true },
+  { "github": "rashidakanchwala", "name": "Rashida Kanchwala", "wizard": true },
+  { "github": "ravi-kumar-pilla", "name": "Ravi Kumar Pilla", "wizard": true },
+  { "github": "SajidAlamQB", "name": "Sajid Alam", "wizard": true }
 ]

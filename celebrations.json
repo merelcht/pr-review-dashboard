@@ -1,0 +1,11 @@
+{
+  "birthdays": [
+    { "name": "Merel Theisen", "month": 11, "day": 11 },
+    {"name": "Alice Cima", "month": 11, "day": 4 },
+    { "name": "Sajid Alam", "month": 12, "day": 20 }
+  ],
+  "milestones": [
+    { "title": "Kedro went open source", "month": 6, "day": 3, "year": 2019 },
+    { "title": "Kedro 1.0 launched", "month": 7, "day": 22, "year": 2025 }
+  ]
+}
