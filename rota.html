@@ -619,7 +619,7 @@
     }
 
     function getWizardColor(github) {
-      const eligible = teamMembers.filter(m => !m.github.includes('[bot]'));
+      const eligible = teamMembers;
       const idx = eligible.findIndex(m => m.github === github);
       return WIZARD_COLORS[idx % WIZARD_COLORS.length];
     }
@@ -863,7 +863,7 @@
     }
 
     function autoFill() {
-      const eligible = teamMembers.filter(m => !m.github.includes('[bot]'));
+      const eligible = teamMembers;
       let lastIdx = -1;
 
       const lastAssigned = rotation.filter(r => eligible.some(m => m.github === r.github)).pop();
@@ -932,16 +932,11 @@
 
       const teamList = teamRes.ok ? await teamRes.json() : [];
       teamMembers = teamList
-        .filter(t => !t.includes('[bot]'))
-        .map(github => ({ github, name: github }));
+        .filter(t => t.wizard)
+        .map(t => ({ github: t.github, name: t.name || t.github }));
 
       const wizardData = wizardRes.ok ? await wizardRes.json() : { rotation: [] };
       rotation = wizardData.rotation || [];
-
-      for (const r of rotation) {
-        const member = teamMembers.find(m => m.github === r.github);
-        if (member) member.name = r.name;
-      }
 
       setView('calendar');
 

@@ -690,7 +690,7 @@
 
         if (teamRes.ok) {
           const teamList = await teamRes.json();
-          teamMembers = new Set(teamList.map(t => t.toLowerCase()));
+          teamMembers = new Set(teamList.map(t => (t.github || t).toLowerCase()));
         }
 
         if (data.updated_at) {

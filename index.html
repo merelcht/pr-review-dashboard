@@ -316,7 +316,7 @@
         const wizard = wizardRes.ok ? await wizardRes.json() : { rotation: [] };
         const celebrations = celebRes.ok ? await celebRes.json() : { birthdays: [], milestones: [] };
         const teamList = teamRes.ok ? await teamRes.json() : [];
-        const teamSet = new Set(teamList.map(t => t.toLowerCase()));
+        const teamSet = new Set(teamList.map(t => (t.github || t).toLowerCase()));
 
         if (data.updated_at) {
           document.getElementById('last-updated').textContent = 'Updated ' + timeAgo(data.updated_at);
