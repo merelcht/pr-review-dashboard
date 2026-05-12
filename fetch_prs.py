@@ -231,6 +231,58 @@ def fetch_project_issues(org, project_number):
     return issues
 
 
+def has_nightly_label(issue):
+    return any(
+        "nightly build" in label["name"].lower()
+        for label in issue.get("labels", [])
+    )
+
+
+def fetch_nightly_issues(repos):
+    print("Fetching nightly build issues...")
+    results = []
+    for repo in repos:
+        try:
+            page = 1
+            while True:
+                issues = gh_get(
+                    f"https://api.github.com/repos/{repo}/issues?state=open&per_page=100&page={page}"
+                )
+                if not issues:
+                    break
+                for issue in issues:
+                    if issue.get("pull_request"):
+                        continue
+                    if not has_nightly_label(issue):
+                        continue
+                    results.append(
+                        {
+                            "number": issue["number"],
+                            "title": issue["title"],
+                            "url": issue["html_url"],
+                            "repo": repo,
+                            "repoShort": repo.split("/")[-1],
+                            "author": {
+                                "login": issue["user"]["login"],
+                                "avatar_url": issue["user"]["avatar_url"],
+                            },
+                            "labels": [
+                                {"name": l["name"], "color": l["color"]}
+                                for l in issue.get("labels", [])
+                            ],
+                            "created_at": issue["created_at"],
+                            "updated_at": issue["updated_at"],
+                        }
+                    )
+                if len(issues) < 100:
+                    break
+                page += 1
+        except urllib.error.HTTPError as e:
+            print(f"  Warning: could not fetch nightly issues for {repo}: {e}")
+    print(f"  Found {len(results)} nightly build issues")
+    return results
+
+
 def main():
     with open("repos.json") as f:
         repos = json.load(f)
@@ -250,12 +302,23 @@ def main():
     except Exception as e:
         print(f"Warning: could not fetch project board: {e}")
 
+    nightly_issues = fetch_nightly_issues(repos)
+
     with open("data.json", "w") as f:
         json.dump(
-            {"updated_at": "", "prs": all_prs, "wizard_issues": wizard_issues}, f
+            {
+                "updated_at": "",
+                "prs": all_prs,
+                "wizard_issues": wizard_issues,
+                "nightly_issues": nightly_issues,
+            },
+            f,
         )
 
-    print(f"Wrote {len(all_prs)} PRs and {len(wizard_issues)} issues to data.json")
+    print(
+        f"Wrote {len(all_prs)} PRs, {len(wizard_issues)} wizard issues, "
+        f"and {len(nightly_issues)} nightly issues to data.json"
+    )
 
 
 if __name__ == "__main__":

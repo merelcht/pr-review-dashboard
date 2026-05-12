@@ -258,6 +258,74 @@
       padding: 20px;
     }
 
+    /* Nightly builds card */
+    .nightly-card { grid-column: 1 / -1; }
+
+    .nightly-repos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .nightly-repo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .nightly-repo-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .nightly-count {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .nightly-count.has-issues { color: var(--red); }
+    .nightly-count.all-clear { color: var(--green); }
+
+    .nightly-issue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nightly-issue {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .nightly-issue a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .nightly-issue a:hover { text-decoration: underline; }
+
+    .nightly-issue .nightly-repo-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
     .loading {
       text-align: center;
       padding: 60px 20px;
@@ -279,7 +347,7 @@
 
     @media (max-width: 768px) {
       .dashboard-grid { grid-template-columns: 1fr; }
-      .wizard-card, .celebrations-card { grid-column: 1; }
+      .wizard-card, .celebrations-card, .nightly-card { grid-column: 1; }
     }
   </style>
 </head>
@@ -331,8 +399,9 @@
         const openPRs = data.prs.filter(pr => pr.status !== 'merged');
         const communityPRs = openPRs.filter(pr => !teamSet.has(pr.author.login.toLowerCase()));
         const wizardIssues = data.wizard_issues || [];
+        const nightlyIssues = data.nightly_issues || [];
 
-        renderDashboard(wizard, communityPRs, wizardIssues, celebrations);
+        renderDashboard(wizard, communityPRs, wizardIssues, celebrations, nightlyIssues);
       } catch (err) {
         const errDiv = document.createElement('div');
         errDiv.className = 'loading';
@@ -412,7 +481,7 @@
       return events.filter(e => e.daysUntil <= 5);
     }
 
-    function renderDashboard(wizard, communityPRs, wizardIssues, celebrations) {
+    function renderDashboard(wizard, communityPRs, wizardIssues, celebrations, nightlyIssues) {
       const current = getCurrentWizard(wizard.rotation);
       const next = getNextWizard(wizard.rotation);
       const events = getUpcomingCelebrations(celebrations);
@@ -466,6 +535,36 @@
             <div class="metric-label">Open issues to triage</div>
             <a href="https://github.com/orgs/kedro-org/projects/10" target="_blank" rel="noopener" class="metric-link">Open project board &rarr;</a>
           </div>
+        </div>
+
+        <div class="card nightly-card">
+          <div class="card-header">
+            <span class="card-title">Nightly Builds</span>
+            <div class="card-icon" style="background:${nightlyIssues.length > 0 ? 'rgba(248,81,73,0.15)' : 'rgba(63,185,80,0.15)'};color:${nightlyIssues.length > 0 ? 'var(--red)' : 'var(--green)'};">
+              <svg width="18" height="18" viewBox="0 0 16 16"><path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a7.003 7.003 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.166.086-.333.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/><path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/><path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/></svg>
+            </div>
+          </div>
+          ${nightlyIssues.length === 0 ? `
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:32px;">${String.fromCodePoint(0x1F389)}</span>
+              <div>
+                <div style="color:var(--green);font-size:16px;font-weight:700;margin-bottom:4px;">All clear</div>
+                <div class="metric-label">No open nightly build issues</div>
+              </div>
+            </div>
+          ` : `
+            <div style="color:var(--red);font-size:16px;font-weight:700;margin-bottom:12px;">${nightlyIssues.length} open nightly build issue${nightlyIssues.length !== 1 ? 's' : ''}</div>
+            <div class="nightly-issue-list">
+              ${nightlyIssues.map(issue => `
+                <div class="nightly-issue">
+                  <a href="${escapeHtml(issue.url)}" target="_blank" rel="noopener">
+                    ${escapeHtml(issue.title)} <span style="color:var(--text-muted);font-weight:400;">#${issue.number}</span>
+                  </a>
+                  <span class="nightly-repo-tag">${escapeHtml(issue.repoShort)}</span>
+                </div>
+              `).join('')}
+            </div>
+          `}
         </div>
 
         ${events.length === 0 ? '' : `
