@@ -758,11 +758,13 @@
 
     function getStatsPRs() {
       const search = document.getElementById('search-input').value.toLowerCase();
+      const statusFilter = document.getElementById('status-filter').value;
       const repoFilter = document.getElementById('repo-filter').value;
 
       return allPRs.filter(pr => {
         if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
+        if (statusFilter !== 'all' && pr.status !== statusFilter) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
         if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
         return true;
