@@ -303,6 +303,12 @@
   <script>
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     async function loadAll() {
       try {
         const [dataRes, wizardRes, celebRes, teamRes] = await Promise.all([
@@ -328,7 +334,11 @@
 
         renderDashboard(wizard, communityPRs, wizardIssues, celebrations);
       } catch (err) {
-        document.getElementById('dashboard').innerHTML = `<div class="loading">Error loading dashboard: ${err.message}</div>`;
+        const errDiv = document.createElement('div');
+        errDiv.className = 'loading';
+        errDiv.textContent = `Error loading dashboard: ${err.message}`;
+        document.getElementById('dashboard').innerHTML = '';
+        document.getElementById('dashboard').appendChild(errDiv);
       }
     }
 
@@ -373,7 +383,7 @@
 
         events.push({
           emoji: isToday ? String.fromCodePoint(0x1F389) : String.fromCodePoint(0x1F382),
-          title: `${b.name}'s Birthday`,
+          title: `${escapeHtml(b.name)}'s Birthday`,
           date: `${MONTHS[b.month - 1]} ${b.day}`,
           isToday,
           daysUntil: isToday ? 0 : daysUntil,
@@ -417,14 +427,14 @@
           </div>
           ${current ? `
             <div class="wizard-profile">
-              <img class="wizard-avatar" src="https://github.com/${current.github}.png?size=160" alt="${current.name}">
+              <img class="wizard-avatar" src="https://github.com/${encodeURIComponent(current.github)}.png?size=160" alt="${escapeHtml(current.name)}">
               <div class="wizard-info">
                 <div class="wizard-role">Community Wizard</div>
-                <h2>${current.name}</h2>
+                <h2>${escapeHtml(current.name)}</h2>
                 <div class="wizard-dates">${formatDateRange(current.start, current.end)}</div>
               </div>
             </div>
-            ${next ? `<div class="wizard-next">Up next: <strong>${next.name}</strong> (${formatDateRange(next.start, next.end)})</div>` : ''}
+            ${next ? `<div class="wizard-next">Up next: <strong>${escapeHtml(next.name)}</strong> (${formatDateRange(next.start, next.end)})</div>` : ''}
           ` : `
             <div style="color:var(--text-muted);font-size:14px;">No wizard scheduled for this week. Update <code>wizard.json</code> to set the rotation.</div>
           `}

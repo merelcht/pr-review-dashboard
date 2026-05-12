@@ -618,6 +618,12 @@
       return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
     }
 
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     function getWizardColor(github) {
       const eligible = teamMembers;
       const idx = eligible.findIndex(m => m.github === github);
@@ -720,8 +726,8 @@
           if (assignment) {
             const color = getWizardColor(assignment.github);
             chipHtml = `<div class="cal-wizard-chip is-start" style="background:${color}" data-start="${weekStart}" data-end="${weekEnd}">
-              <img src="https://github.com/${assignment.github}.png?size=32" alt="">
-              <span>${assignment.name.split(' ')[0]}</span>
+              <img src="https://github.com/${encodeURIComponent(assignment.github)}.png?size=32" alt="">
+              <span>${escapeHtml(assignment.name.split(' ')[0])}</span>
             </div>`;
           } else {
             chipHtml = `<div class="cal-unassigned" data-start="${weekStart}" data-end="${weekEnd}">+ Assign</div>`;
@@ -765,7 +771,7 @@
       const html = Array.from(activeWizards.entries()).map(([github, name]) =>
         `<div class="cal-legend-item">
           <div class="cal-legend-swatch" style="background:${getWizardColor(github)}"></div>
-          ${name}
+          ${escapeHtml(name)}
         </div>`
       ).join('');
 
@@ -782,7 +788,7 @@
       const options = ['<option value="">-- Unassigned --</option>'];
       for (const m of teamMembers) {
         const sel = current && current.github === m.github ? 'selected' : '';
-        options.push(`<option value="${m.github}" ${sel}>${m.name}</option>`);
+        options.push(`<option value="${escapeHtml(m.github)}" ${sel}>${escapeHtml(m.name)}</option>`);
       }
       document.getElementById('popup-select').innerHTML = options.join('');
       document.getElementById('cal-popup').classList.add('visible');
@@ -820,11 +826,11 @@
         const cls = current ? 'is-current' : (past ? 'is-past' : '');
 
         const options = teamMembers.map(m =>
-          `<option value="${m.github}" ${assignment && assignment.github === m.github ? 'selected' : ''}>${m.name}</option>`
+          `<option value="${escapeHtml(m.github)}" ${assignment && assignment.github === m.github ? 'selected' : ''}>${escapeHtml(m.name)}</option>`
         ).join('');
 
         const avatar = assignment
-          ? `<img class="wizard-avatar-small" src="https://github.com/${assignment.github}.png?size=64" alt="${assignment.name}">`
+          ? `<img class="wizard-avatar-small" src="https://github.com/${encodeURIComponent(assignment.github)}.png?size=64" alt="${escapeHtml(assignment.name)}">`
           : '<div class="empty-avatar"></div>';
 
         return `
