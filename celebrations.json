@@ -1,0 +1,16 @@
+{
+  "birthdays": [
+    { "name": "Merel Theisen", "month": 1, "day": 15 },
+    { "name": "Rashida Kanchwala", "month": 3, "day": 22 },
+    { "name": "Jitendra Gundaniya", "month": 7, "day": 8 },
+    { "name": "Ankita Katiyar", "month": 9, "day": 12 },
+    { "name": "Elena Khaustova", "month": 11, "day": 5 },
+    { "name": "Sajid Alam", "month": 4, "day": 30 },
+    { "name": "Ravi Kumar Pilla", "month": 6, "day": 18 }
+  ],
+  "milestones": [
+    { "title": "Kedro went open source", "month": 5, "day": 31, "year": 2019 },
+    { "title": "Kedro 1.0 launched", "month": 12, "day": 5, "year": 2024 },
+    { "title": "Kedro joined LF AI & Data", "month": 6, "day": 22, "year": 2021 }
+  ]
+}
