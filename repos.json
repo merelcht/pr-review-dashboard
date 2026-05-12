@@ -1,5 +1,6 @@
 [
   "kedro-org/kedro",
   "kedro-org/kedro-plugins",
+  "kedro-org/kedro-starters",
   "kedro-org/kedro-viz"
 ]
