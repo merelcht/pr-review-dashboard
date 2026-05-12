@@ -176,8 +176,8 @@ def fetch_project_issues(org, project_number):
 
         status = ""
         for fv in item.get("fieldValues", {}).get("nodes", []):
-            field = fv.get("field", {})
-            if field.get("name", "").lower() == "status":
+            field = (fv or {}).get("field")
+            if field and field.get("name", "").lower() == "status":
                 status = fv.get("name", "")
 
         issues.append(
