@@ -19,9 +19,11 @@ HEADERS = {
 REPO_PATTERN = re.compile(r"^[a-zA-Z0-9\-_.]+/[a-zA-Z0-9\-_.]+$")
 
 
+REQUEST_TIMEOUT = 30
+
 def gh_get(url):
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
         return json.loads(resp.read())
 
 
@@ -153,10 +155,11 @@ def fetch_project_issues(org, project_number):
     }
     """
 
+    MAX_PAGES = 20
     all_items = []
     cursor = None
 
-    while True:
+    for page in range(MAX_PAGES):
         variables = {"org": org, "number": project_number, "cursor": cursor}
         data = json.dumps({"query": query, "variables": variables}).encode()
         req = urllib.request.Request(
@@ -165,7 +168,7 @@ def fetch_project_issues(org, project_number):
             headers={**HEADERS, "Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
             result = json.loads(resp.read())
 
         if "errors" in result:

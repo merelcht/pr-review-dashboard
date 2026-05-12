@@ -700,7 +700,14 @@
         populateRepoFilter(allPRs);
         renderAll();
       } catch (err) {
-        document.getElementById('pr-list').innerHTML = `<div class="empty-state">Could not load PR data: ${err.message}<br><br>Make sure the GitHub Action has run at least once.</div>`;
+        const errDiv = document.createElement('div');
+        errDiv.className = 'empty-state';
+        errDiv.textContent = `Could not load PR data: ${err.message}`;
+        errDiv.appendChild(document.createElement('br'));
+        errDiv.appendChild(document.createElement('br'));
+        errDiv.appendChild(document.createTextNode('Make sure the GitHub Action has run at least once.'));
+        document.getElementById('pr-list').innerHTML = '';
+        document.getElementById('pr-list').appendChild(errDiv);
       }
     }
 
@@ -716,7 +723,6 @@
     }
 
     function renderAll() {
-      renderStats();
       renderReviewerChips();
       renderView();
     }
@@ -727,52 +733,40 @@
       else renderTable();
     }
 
-    function getFilteredPRs() {
+    function getFilteredPRs(opts = {}) {
       const search = document.getElementById('search-input').value.toLowerCase();
       const statusFilter = document.getElementById('status-filter').value;
       const repoFilter = document.getElementById('repo-filter').value;
-      const sort = document.getElementById('sort-select').value;
+      const skipStatusFilter = opts.skipStatusFilter || false;
 
       let prs = allPRs.filter(pr => {
         if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
-        if (currentView !== 'board' && statusFilter !== 'all' && pr.status !== statusFilter) return false;
+        if (!skipStatusFilter && statusFilter !== 'all' && pr.status !== statusFilter) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
         if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
         return true;
       });
 
-      prs.sort((a, b) => {
-        switch (sort) {
-          case 'updated_desc': return new Date(b.updated_at) - new Date(a.updated_at);
-          case 'updated_asc': return new Date(a.updated_at) - new Date(b.updated_at);
-          case 'created_desc': return new Date(b.created_at) - new Date(a.created_at);
-          case 'created_asc': return new Date(a.created_at) - new Date(b.created_at);
-          case 'reviewers_desc': return b.reviewers.length - a.reviewers.length;
-          default: return 0;
-        }
-      });
+      if (!opts.skipSort) {
+        const sort = document.getElementById('sort-select').value;
+        prs.sort((a, b) => {
+          switch (sort) {
+            case 'updated_desc': return new Date(b.updated_at) - new Date(a.updated_at);
+            case 'updated_asc': return new Date(a.updated_at) - new Date(b.updated_at);
+            case 'created_desc': return new Date(b.created_at) - new Date(a.created_at);
+            case 'created_asc': return new Date(a.created_at) - new Date(b.created_at);
+            case 'reviewers_desc': return b.reviewers.length - a.reviewers.length;
+            default: return 0;
+          }
+        });
+      }
 
       return prs;
     }
 
-    function getStatsPRs() {
-      const search = document.getElementById('search-input').value.toLowerCase();
-      const statusFilter = document.getElementById('status-filter').value;
-      const repoFilter = document.getElementById('repo-filter').value;
-
-      return allPRs.filter(pr => {
-        if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
-        if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
-        if (statusFilter !== 'all' && pr.status !== statusFilter) return false;
-        if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
-        if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
-        return true;
-      });
-    }
-
     function renderStats() {
-      const filtered = getStatsPRs();
+      const filtered = getFilteredPRs({ skipSort: true });
       const stats = {
         total: filtered.length,
         needs_review: filtered.filter(pr => pr.status === 'needs_review').length,
@@ -815,18 +809,35 @@
       document.getElementById('reviewer-summary').style.display = 'block';
       const sorted = [...reviewerCounts.entries()].sort((a, b) => b[1].total - a[1].total);
 
-      document.getElementById('reviewer-chips').innerHTML = `
-        <div class="reviewer-chip ${!activeReviewerFilter ? 'active' : ''}" onclick="setReviewerFilter(null)">
-          All
-        </div>
-        ${sorted.map(([login, data]) => `
-          <div class="reviewer-chip ${activeReviewerFilter === login ? 'active' : ''}" onclick="setReviewerFilter('${login}')">
-            <img src="${data.avatar_url}&s=48" alt="${login}">
-            ${login}
-            <span class="chip-count" title="${data.pending} pending">${data.total}</span>
-          </div>
-        `).join('')}
-      `;
+      const chipsContainer = document.getElementById('reviewer-chips');
+      chipsContainer.innerHTML = '';
+
+      const allChip = document.createElement('div');
+      allChip.className = `reviewer-chip ${!activeReviewerFilter ? 'active' : ''}`;
+      allChip.textContent = 'All';
+      allChip.addEventListener('click', () => setReviewerFilter(null));
+      chipsContainer.appendChild(allChip);
+
+      for (const [login, data] of sorted) {
+        const chip = document.createElement('div');
+        chip.className = `reviewer-chip ${activeReviewerFilter === login ? 'active' : ''}`;
+        chip.addEventListener('click', () => setReviewerFilter(login));
+
+        const img = document.createElement('img');
+        img.src = `${data.avatar_url}&s=48`;
+        img.alt = login;
+        chip.appendChild(img);
+
+        chip.appendChild(document.createTextNode(` ${login} `));
+
+        const count = document.createElement('span');
+        count.className = 'chip-count';
+        count.title = `${data.pending} pending`;
+        count.textContent = data.total;
+        chip.appendChild(count);
+
+        chipsContainer.appendChild(chip);
+      }
     }
 
     function setReviewerFilter(login) {
@@ -848,15 +859,15 @@
     function renderReviewerAvatars(reviewers, small) {
       if (reviewers.length === 0) return '<span style="color:var(--text-muted);font-size:12px;">None</span>';
       return reviewers.map(r => `
-        <div class="reviewer-avatar tooltip" data-tooltip="${r.login}: ${REVIEW_STATE_LABEL[r.state] || r.state}">
-          <img src="${r.avatar_url}&s=48" alt="${r.login}">
+        <div class="reviewer-avatar tooltip" data-tooltip="${escapeHtml(r.login)}: ${REVIEW_STATE_LABEL[r.state] || escapeHtml(r.state)}">
+          <img src="${r.avatar_url}&s=48" alt="${escapeHtml(r.login)}">
           <div class="review-state-dot ${REVIEW_DOT_CLASS[r.state] || 'review-dot-pending'}"></div>
         </div>
       `).join('');
     }
 
     function renderBoard() {
-      const prs = getFilteredPRs();
+      const prs = getFilteredPRs({ skipStatusFilter: true });
       const grouped = {};
       COLUMNS.forEach(col => grouped[col.key] = []);
       prs.forEach(pr => {
