@@ -119,7 +119,7 @@ def fetch_project_issues(org, project_number):
     query($org: String!, $number: Int!) {
       organization(login: $org) {
         projectV2(number: $number) {
-          items(first: 100, orderBy: {field: POSITION, direction: ASC}) {
+          items(first: 200, orderBy: {field: POSITION, direction: ASC}) {
             nodes {
               content {
                 ... on Issue {
