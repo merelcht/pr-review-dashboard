@@ -75,9 +75,11 @@ def fetch_repo(repo):
             status = "merged"
         elif "CHANGES_REQUESTED" in review_states:
             status = "changes_requested"
-        elif "APPROVED" in review_states:
+        elif review_states.count("APPROVED") >= 2:
             status = "approved"
-        elif any(s in ("COMMENTED", "DISMISSED") for s in review_states):
+        elif "APPROVED" in review_states or any(
+            s in ("COMMENTED", "DISMISSED") for s in review_states
+        ):
             status = "in_review"
         else:
             status = "needs_review"

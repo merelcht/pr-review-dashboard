@@ -792,7 +792,8 @@
 
     function renderReviewerChips() {
       const reviewerCounts = new Map();
-      allPRs.forEach(pr => {
+      const sourcePRs = sourceFilter === 'community' ? allPRs.filter(isCommunityPR) : allPRs;
+      sourcePRs.forEach(pr => {
         pr.reviewers.forEach(r => {
           const login = r.login;
           const entry = reviewerCounts.get(login) || { login, avatar_url: r.avatar_url, pending: 0, total: 0 };
