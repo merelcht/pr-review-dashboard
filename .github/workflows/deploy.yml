@@ -48,7 +48,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir _site
-          cp index.html data.json _site/
+          cp index.html data.json team.json _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

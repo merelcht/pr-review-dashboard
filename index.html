@@ -266,6 +266,30 @@
 
     .board-card.card-low-reviewers { border-color: var(--orange); border-style: dashed; }
 
+    .source-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .source-toggle button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .source-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .source-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
     .reviewer-avatars {
       display: flex;
       gap: 4px;
@@ -562,6 +586,10 @@
     </div>
 
     <div class="filters-bar">
+      <div class="source-toggle">
+        <button id="source-community" class="active" onclick="setSourceFilter('community')">Community</button>
+        <button id="source-all" onclick="setSourceFilter('all')">All PRs</button>
+      </div>
       <input type="search" id="search-input" placeholder="Search PRs by title, author, or repo...">
       <select id="status-filter">
         <option value="all">All statuses</option>
@@ -590,8 +618,10 @@
 
   <script>
     let allPRs = [];
+    let teamMembers = new Set();
     let activeReviewerFilter = null;
     let currentView = 'table';
+    let sourceFilter = 'community';
 
     const COLUMNS = [
       { key: 'draft', label: 'Draft' },
@@ -648,10 +678,18 @@
 
     async function loadData() {
       try {
-        const res = await fetch('data.json');
-        if (!res.ok) throw new Error('data.json not found — the GitHub Action may not have run yet.');
-        const data = await res.json();
+        const [dataRes, teamRes] = await Promise.all([
+          fetch('data.json'),
+          fetch('team.json'),
+        ]);
+        if (!dataRes.ok) throw new Error('data.json not found — the GitHub Action may not have run yet.');
+        const data = await dataRes.json();
         allPRs = data.prs.filter(pr => pr.status !== 'merged');
+
+        if (teamRes.ok) {
+          const teamList = await teamRes.json();
+          teamMembers = new Set(teamList.map(t => t.toLowerCase()));
+        }
 
         if (data.updated_at) {
           document.getElementById('last-updated').textContent = 'Data from ' + timeAgo(data.updated_at);
@@ -662,6 +700,17 @@
       } catch (err) {
         document.getElementById('pr-list').innerHTML = `<div class="empty-state">Could not load PR data: ${err.message}<br><br>Make sure the GitHub Action has run at least once.</div>`;
       }
+    }
+
+    function isCommunityPR(pr) {
+      return !teamMembers.has(pr.author.login.toLowerCase());
+    }
+
+    function setSourceFilter(value) {
+      sourceFilter = value;
+      document.getElementById('source-community').classList.toggle('active', value === 'community');
+      document.getElementById('source-all').classList.toggle('active', value === 'all');
+      renderAll();
     }
 
     function renderAll() {
@@ -683,6 +732,7 @@
       const sort = document.getElementById('sort-select').value;
 
       let prs = allPRs.filter(pr => {
+        if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
         if (currentView !== 'board' && statusFilter !== 'all' && pr.status !== statusFilter) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
@@ -709,6 +759,7 @@
       const repoFilter = document.getElementById('repo-filter').value;
 
       return allPRs.filter(pr => {
+        if (sourceFilter === 'community' && !isCommunityPR(pr)) return false;
         if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
         if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
         if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
