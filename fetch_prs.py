@@ -168,6 +168,8 @@ def fetch_project_issues(org, project_number):
         .get("nodes", [])
     )
     for item in items:
+        if not item:
+            continue
         content = item.get("content")
         if not content or not content.get("title"):
             continue
