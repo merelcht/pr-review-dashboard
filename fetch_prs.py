@@ -116,10 +116,14 @@ def fetch_repo(repo):
 def fetch_project_issues(org, project_number):
     print(f"Fetching project board {org}/{project_number}...")
     query = """
-    query($org: String!, $number: Int!) {
+    query($org: String!, $number: Int!, $cursor: String) {
       organization(login: $org) {
         projectV2(number: $number) {
-          items(first: 150, orderBy: {field: POSITION, direction: ASC}) {
+          items(first: 100, after: $cursor) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               content {
                 ... on Issue {
@@ -148,26 +152,41 @@ def fetch_project_issues(org, project_number):
       }
     }
     """
-    variables = {"org": org, "number": project_number}
-    data = json.dumps({"query": query, "variables": variables}).encode()
-    req = urllib.request.Request(
-        "https://api.github.com/graphql",
-        data=data,
-        headers={**HEADERS, "Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req) as resp:
-        result = json.loads(resp.read())
+
+    all_items = []
+    cursor = None
+
+    while True:
+        variables = {"org": org, "number": project_number, "cursor": cursor}
+        data = json.dumps({"query": query, "variables": variables}).encode()
+        req = urllib.request.Request(
+            "https://api.github.com/graphql",
+            data=data,
+            headers={**HEADERS, "Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req) as resp:
+            result = json.loads(resp.read())
+
+        if "errors" in result:
+            print(f"  GraphQL errors: {result['errors']}")
+
+        project = (result.get("data") or {}).get("organization") or {}
+        items_data = (project.get("projectV2") or {}).get("items") or {}
+        nodes = items_data.get("nodes") or []
+        all_items.extend(nodes)
+
+        page_info = items_data.get("pageInfo") or {}
+        if page_info.get("hasNextPage"):
+            cursor = page_info["endCursor"]
+            print(f"  Fetched {len(all_items)} items so far, fetching next page...")
+        else:
+            break
+
+    print(f"  Fetched {len(all_items)} total items from project board")
 
     issues = []
-    items = (
-        result.get("data", {})
-        .get("organization", {})
-        .get("projectV2", {})
-        .get("items", {})
-        .get("nodes", [])
-    )
-    for item in items:
+    for item in all_items:
         if not item:
             continue
         content = item.get("content")
@@ -177,8 +196,11 @@ def fetch_project_issues(org, project_number):
             continue
 
         status = ""
-        for fv in item.get("fieldValues", {}).get("nodes", []):
-            field = (fv or {}).get("field")
+        field_values = (item.get("fieldValues") or {}).get("nodes") or []
+        for fv in field_values:
+            if not fv:
+                continue
+            field = fv.get("field")
             if field and field.get("name", "").lower() == "status":
                 status = fv.get("name", "")
 
