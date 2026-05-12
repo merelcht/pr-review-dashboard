@@ -671,6 +671,7 @@
     }
 
     function renderView() {
+      renderStats();
       if (currentView === 'board') renderBoard();
       else renderTable();
     }
@@ -703,15 +704,28 @@
       return prs;
     }
 
+    function getStatsPRs() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const repoFilter = document.getElementById('repo-filter').value;
+
+      return allPRs.filter(pr => {
+        if (search && !pr.title.toLowerCase().includes(search) && !pr.author.login.toLowerCase().includes(search) && !pr.repo.toLowerCase().includes(search)) return false;
+        if (repoFilter !== 'all' && pr.repo !== repoFilter) return false;
+        if (activeReviewerFilter && !pr.reviewers.some(r => r.login === activeReviewerFilter)) return false;
+        return true;
+      });
+    }
+
     function renderStats() {
+      const filtered = getStatsPRs();
       const stats = {
-        total: allPRs.length,
-        needs_review: allPRs.filter(pr => pr.status === 'needs_review').length,
-        in_review: allPRs.filter(pr => pr.status === 'in_review').length,
-        approved: allPRs.filter(pr => pr.status === 'approved').length,
-        changes_requested: allPRs.filter(pr => pr.status === 'changes_requested').length,
-        draft: allPRs.filter(pr => pr.status === 'draft').length,
-        low_reviewers: allPRs.filter(pr => pr.status !== 'draft' && pr.reviewers.length < 2).length,
+        total: filtered.length,
+        needs_review: filtered.filter(pr => pr.status === 'needs_review').length,
+        in_review: filtered.filter(pr => pr.status === 'in_review').length,
+        approved: filtered.filter(pr => pr.status === 'approved').length,
+        changes_requested: filtered.filter(pr => pr.status === 'changes_requested').length,
+        draft: filtered.filter(pr => pr.status === 'draft').length,
+        low_reviewers: filtered.filter(pr => pr.status !== 'draft' && pr.reviewers.length < 2).length,
       };
 
       document.getElementById('stats-bar').innerHTML = `
