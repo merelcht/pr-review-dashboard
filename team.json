@@ -9,7 +9,7 @@
   { "github": "Joseph-Perkins", "name": "Joseph Perkins", "wizard": false },
   { "github": "lrcouto", "name": "Laura Couto", "wizard": true },
   { "github": "merelcht", "name": "Merel Theisen", "wizard": true },
-  { "github": "rashidakanchwala", "name": "Rashida Kanchwala", "wizard": true },
+  { "github": "rashidakanchwala", "name": "Rashida Kanchwala", "wizard": false },
   { "github": "ravi-kumar-pilla", "name": "Ravi Kumar Pilla", "wizard": true },
   { "github": "SajidAlamQB", "name": "Sajid Alam", "wizard": true }
 ]
