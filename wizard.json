@@ -127,20 +127,20 @@
       "end": "2026-10-04"
     },
     {
-      "github": "ravi-kumar-pilla",
-      "name": "Ravi Kumar Pilla",
+      "github": "SajidAlamQB",
+      "name": "Sajid Alam",
       "start": "2026-10-05",
       "end": "2026-10-11"
     },
     {
-      "github": "SajidAlamQB",
-      "name": "Sajid Alam",
+      "github": "ankatiyar",
+      "name": "Ankita Katiyar",
       "start": "2026-10-12",
       "end": "2026-10-18"
     },
     {
-      "github": "ankatiyar",
-      "name": "Ankita Katiyar",
+      "github": "jitu5",
+      "name": "Jitendra Gundaniya",
       "start": "2026-10-19",
       "end": "2026-10-25"
     },
@@ -149,6 +149,48 @@
       "name": "Huong",
       "start": "2026-10-26",
       "end": "2026-11-01"
+    },
+    {
+      "github": "lrcouto",
+      "name": "Laura Couto",
+      "start": "2026-11-02",
+      "end": "2026-11-08"
+    },
+    {
+      "github": "merelcht",
+      "name": "Merel Theisen",
+      "start": "2026-11-09",
+      "end": "2026-11-15"
+    },
+    {
+      "github": "SajidAlamQB",
+      "name": "Sajid Alam",
+      "start": "2026-11-16",
+      "end": "2026-11-22"
+    },
+    {
+      "github": "ankatiyar",
+      "name": "Ankita Katiyar",
+      "start": "2026-11-23",
+      "end": "2026-11-29"
+    },
+    {
+      "github": "jitu5",
+      "name": "Jitendra Gundaniya",
+      "start": "2026-11-30",
+      "end": "2026-12-06"
+    },
+    {
+      "github": "Huongg",
+      "name": "Huong",
+      "start": "2026-12-07",
+      "end": "2026-12-13"
+    },
+    {
+      "github": "lrcouto",
+      "name": "Laura Couto",
+      "start": "2026-12-14",
+      "end": "2026-12-20"
     }
   ]
 }
