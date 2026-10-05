@@ -151,14 +151,14 @@
       "end": "2026-11-01"
     },
     {
-      "github": "lrcouto",
-      "name": "Laura Couto",
+      "github": "merelcht",
+      "name": "Merel Theisen",
       "start": "2026-11-02",
       "end": "2026-11-08"
     },
     {
-      "github": "merelcht",
-      "name": "Merel Theisen",
+      "github": "lrcouto",
+      "name": "Laura Couto",
       "start": "2026-11-09",
       "end": "2026-11-15"
     },
@@ -191,6 +191,12 @@
       "name": "Laura Couto",
       "start": "2026-12-14",
       "end": "2026-12-20"
+    },
+    {
+      "github": "merelcht",
+      "name": "Merel Theisen",
+      "start": "2026-12-21",
+      "end": "2026-12-27"
     }
   ]
 }
