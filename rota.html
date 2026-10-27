@@ -61,15 +61,19 @@
     .header-actions a:hover { background: var(--surface-hover); }
     .header-actions a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-    /* Auth gate */
+    /* Auth modal */
     .auth-gate {
-      display: flex;
-      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
       align-items: center;
       justify-content: center;
-      min-height: calc(100vh - 60px);
       padding: 24px;
+      z-index: 200;
     }
+
+    .auth-gate.visible { display: flex; }
 
     .auth-box {
       background: var(--surface);
@@ -116,6 +120,20 @@
 
     .auth-btn:hover { opacity: 0.9; }
 
+    .auth-cancel {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .auth-cancel:hover { background: var(--surface-hover); }
+
     .auth-error {
       color: var(--red);
       font-size: 13px;
@@ -128,7 +146,6 @@
       padding: 24px;
       max-width: 1100px;
       margin: 0 auto;
-      display: none;
     }
 
     .page-header {
@@ -359,6 +376,8 @@
 
     .cal-unassigned:hover { border-color: var(--accent); color: var(--accent); }
 
+    .read-only .cal-wizard-chip { cursor: default; }
+
     /* Calendar popup for assigning */
     .cal-popup {
       position: fixed;
@@ -507,19 +526,20 @@
 
   <div class="auth-gate" id="auth-gate">
     <div class="auth-box">
-      <h2>Wizard Rota</h2>
-      <p>Enter the team passphrase to manage the wizard rotation schedule.</p>
+      <h2>Edit Wizard Rota</h2>
+      <p>Enter the team passphrase to edit the wizard rotation schedule.</p>
       <input type="password" class="auth-input" id="passphrase-input" placeholder="Team passphrase" autocomplete="off">
-      <button class="auth-btn" id="auth-btn">Enter</button>
+      <button class="auth-btn" id="auth-btn">Unlock editing</button>
+      <button class="auth-cancel" id="auth-cancel">Cancel</button>
       <div class="auth-error" id="auth-error">Incorrect passphrase. Ask a team member for access.</div>
     </div>
   </div>
 
-  <div class="main-content" id="main-content">
+  <div class="main-content read-only" id="main-content">
     <div class="page-header">
       <div class="page-header-left">
         <div class="page-title">Wizard Rotation Schedule</div>
-        <div class="page-desc">Assign one wizard per week. Export as wizard.json to commit to the repo.</div>
+        <div class="page-desc" id="page-desc">Who's on wizard duty each week.</div>
       </div>
       <div class="view-toggle">
         <button id="view-calendar" class="active" onclick="setView('calendar')">Calendar</button>
@@ -548,7 +568,10 @@
       <div class="week-list" id="week-list"></div>
     </div>
 
-    <div class="actions-bar">
+    <div class="actions-bar" id="view-actions">
+      <button class="action-btn btn-secondary" id="edit-btn">Edit rota</button>
+    </div>
+    <div class="actions-bar" id="edit-actions" style="display:none">
       <button class="action-btn btn-auto" id="auto-fill-btn">Auto-fill empty weeks</button>
       <button class="action-btn btn-primary" id="download-btn">Download wizard.json</button>
       <button class="action-btn btn-secondary" id="copy-btn">Copy to clipboard</button>
@@ -588,6 +611,7 @@
     let calYear = new Date().getFullYear();
     let currentView = 'calendar';
     let popupWeek = null;
+    let canEdit = false;
 
     async function sha256(message) {
       const data = new TextEncoder().encode(message);
@@ -729,7 +753,7 @@
               <img src="https://github.com/${encodeURIComponent(assignment.github)}.png?size=32" alt="">
               <span>${escapeHtml(assignment.name.split(' ')[0])}</span>
             </div>`;
-          } else {
+          } else if (canEdit) {
             chipHtml = `<div class="cal-unassigned" data-start="${weekStart}" data-end="${weekEnd}">+ Assign</div>`;
           }
         } else if (assignment && dayOfWeek >= 2 && dayOfWeek <= 6) {
@@ -749,9 +773,11 @@
 
       document.getElementById('cal-grid').innerHTML = html;
 
-      document.querySelectorAll('.cal-wizard-chip, .cal-unassigned').forEach(el => {
-        el.addEventListener('click', () => openPopup(el.dataset.start, el.dataset.end));
-      });
+      if (canEdit) {
+        document.querySelectorAll('.cal-wizard-chip, .cal-unassigned').forEach(el => {
+          el.addEventListener('click', () => openPopup(el.dataset.start, el.dataset.end));
+        });
+      }
 
       renderLegend();
     }
@@ -839,7 +865,7 @@
               ${current ? '<span class="week-label">This week</span>' : ''}
               ${fmtDisplay(w.monday)} - ${fmtDisplay(w.sunday)}, ${w.sunday.getFullYear()}
             </div>
-            <select class="wizard-select" data-start="${w.start}" data-end="${w.end}" ${past ? 'disabled' : ''}>
+            <select class="wizard-select" data-start="${w.start}" data-end="${w.end}" ${past || !canEdit ? 'disabled' : ''}>
               <option value="">-- Unassigned --</option>
               ${options}
             </select>
@@ -907,14 +933,15 @@
       setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
 
-    async function init() {
-      const stored = sessionStorage.getItem('rota_auth');
-      if (stored === 'ok') unlock();
+    function openAuthModal() {
+      document.getElementById('auth-error').style.display = 'none';
+      document.getElementById('passphrase-input').value = '';
+      document.getElementById('auth-gate').classList.add('visible');
+      document.getElementById('passphrase-input').focus();
+    }
 
-      document.getElementById('auth-btn').addEventListener('click', authenticate);
-      document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') authenticate();
-      });
+    function closeAuthModal() {
+      document.getElementById('auth-gate').classList.remove('visible');
     }
 
     async function authenticate() {
@@ -922,15 +949,34 @@
       const hash = await sha256(input);
       if (hash === PASSPHRASE_HASH) {
         sessionStorage.setItem('rota_auth', 'ok');
-        unlock();
+        closeAuthModal();
+        enableEditing();
       } else {
         document.getElementById('auth-error').style.display = 'block';
       }
     }
 
-    async function unlock() {
-      document.getElementById('auth-gate').style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
+    function enableEditing() {
+      canEdit = true;
+      document.getElementById('main-content').classList.remove('read-only');
+      document.getElementById('page-desc').textContent = 'Assign one wizard per week. Export as wizard.json to commit to the repo.';
+      document.getElementById('view-actions').style.display = 'none';
+      document.getElementById('edit-actions').style.display = 'flex';
+      render();
+    }
+
+    async function init() {
+      // Auth
+      document.getElementById('edit-btn').addEventListener('click', openAuthModal);
+      document.getElementById('auth-btn').addEventListener('click', authenticate);
+      document.getElementById('auth-cancel').addEventListener('click', closeAuthModal);
+      document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') authenticate();
+        if (e.key === 'Escape') closeAuthModal();
+      });
+      document.getElementById('auth-gate').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('auth-gate')) closeAuthModal();
+      });
 
       const [teamRes, wizardRes] = await Promise.all([
         fetch('team.json'), fetch('wizard.json')
@@ -990,6 +1036,8 @@
         await navigator.clipboard.writeText(buildJson());
         showToast('Copied wizard.json to clipboard');
       });
+
+      if (sessionStorage.getItem('rota_auth') === 'ok') enableEditing();
     }
 
     init();
