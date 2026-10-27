@@ -84,6 +84,14 @@
       padding: 24px;
     }
 
+    .card-link {
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .card-link:hover { border-color: var(--accent); background: var(--surface-hover); }
+
     .card-header {
       display: flex;
       align-items: center;
@@ -111,7 +119,9 @@
     .card-icon svg { fill: currentColor; }
 
     /* Wizard card */
-    .wizard-card { grid-column: 1 / -1; }
+    .wizard-card { grid-column: 1 / -1; display: block; }
+
+    .wizard-card.card-link:hover { border-color: var(--purple); }
 
     .wizard-profile {
       display: flex;
@@ -191,7 +201,7 @@
       margin-top: 8px;
     }
 
-    .metric-link:hover { text-decoration: underline; }
+    .card-link:hover .metric-link { text-decoration: underline; }
 
     /* Celebrations card */
     .celebrations-card { grid-column: 1 / -1; }
@@ -421,13 +431,13 @@
       });
     }
 
-    function getNextWizard(rotation) {
+    function getNextWizards(rotation, count) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const future = rotation
+      return rotation
         .filter(w => new Date(w.start + 'T00:00:00') > today)
-        .sort((a, b) => new Date(a.start) - new Date(b.start));
-      return future[0] || null;
+        .sort((a, b) => new Date(a.start) - new Date(b.start))
+        .slice(0, count);
     }
 
     function formatDateRange(start, end) {
@@ -483,13 +493,13 @@
 
     function renderDashboard(wizard, communityPRs, wizardIssues, celebrations, nightlyIssues) {
       const current = getCurrentWizard(wizard.rotation);
-      const next = getNextWizard(wizard.rotation);
+      const upcoming = getNextWizards(wizard.rotation, 3);
       const events = getUpcomingCelebrations(celebrations);
 
       const needsReview = communityPRs.filter(pr => pr.status === 'needs_review').length;
 
       document.getElementById('dashboard').innerHTML = `
-        <div class="card wizard-card">
+        <a class="card card-link wizard-card" href="rota.html" title="View the wizard rota">
           <div class="card-header">
             <span class="card-title">Community Wizard This Week</span>
             <img class="wizard-hat" src="wizard-hat.png" alt="Wizard hat">
@@ -503,13 +513,15 @@
                 <div class="wizard-dates">${formatDateRange(current.start, current.end)}</div>
               </div>
             </div>
-            ${next ? `<div class="wizard-next">Up next: <strong>${escapeHtml(next.name)}</strong> (${formatDateRange(next.start, next.end)})</div>` : ''}
+            ${upcoming.length ? `<div class="wizard-next">Up next: ${upcoming.map(w =>
+              `<strong>${escapeHtml(w.name)}</strong> (${formatDateRange(w.start, w.end)})`
+            ).join(' &middot; ')}</div>` : ''}
           ` : `
             <div style="color:var(--text-muted);font-size:14px;">No wizard scheduled for this week. Update <code>wizard.json</code> to set the rotation.</div>
           `}
-        </div>
+        </a>
 
-        <div class="card metric-card">
+        <a class="card card-link metric-card" href="reviews.html">
           <div class="card-header">
             <span class="card-title">Community PRs</span>
             <div class="card-icon" style="background:rgba(88,166,255,0.15);color:var(--accent);">
@@ -519,11 +531,11 @@
           <div class="metric-number" style="color:var(--accent)">${communityPRs.length}</div>
           <div>
             <div class="metric-label">${needsReview} awaiting first review</div>
-            <a href="reviews.html" class="metric-link">View PR board &rarr;</a>
+            <span class="metric-link">View PR board &rarr;</span>
           </div>
-        </div>
+        </a>
 
-        <div class="card metric-card">
+        <a class="card card-link metric-card" href="https://github.com/orgs/kedro-org/projects/10" target="_blank" rel="noopener">
           <div class="card-header">
             <span class="card-title">Wizard Board Issues</span>
             <div class="card-icon" style="background:rgba(63,185,80,0.15);color:var(--green);">
@@ -533,9 +545,9 @@
           <div class="metric-number" style="color:var(--green)">${wizardIssues.length}</div>
           <div>
             <div class="metric-label">Open issues to triage</div>
-            <a href="https://github.com/orgs/kedro-org/projects/10" target="_blank" rel="noopener" class="metric-link">Open project board &rarr;</a>
+            <span class="metric-link">Open project board &rarr;</span>
           </div>
-        </div>
+        </a>
 
         <div class="card nightly-card">
           <div class="card-header">
